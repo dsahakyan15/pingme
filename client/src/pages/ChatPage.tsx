@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { UserIcon, PhoneIcon, VideoIcon } from "../widgets/simpleIcons";
 import { Link } from "react-router-dom";
 import ClientInputForm from "../components/ClientInputForm";
-
+import { useWebSocket } from "../hooks/useWebSocket";
 
 export interface Message {
   id: number;
@@ -13,40 +13,8 @@ export interface Message {
 
 const ChatPage: React.FC = () => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
-
-  // TODO: Реализовать WebSocket для реального времени
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: "Привет! Как дела?",
-      sender: "contact",
-      timestamp: "10:30",
-    },
-    {
-      id: 2,
-      text: "Привет! Всё отлично, спасибо! А у тебя как?",
-      sender: "user",
-      timestamp: "10:32",
-    },
-    {
-      id: 3,
-      text: "Тоже хорошо! Кстати, не забудь про завтрашнюю встречу",
-      sender: "contact",
-      timestamp: "10:33",
-    },
-    {
-      id: 4,
-      text: "Конечно, помню! В 15:00 в офисе, правильно?",
-      sender: "user",
-      timestamp: "10:35",
-    },
-    {
-      id: 5,
-      text: "Да, именно так. До встречи!",
-      sender: "contact",
-      timestamp: "10:36",
-    },
-  ]);
+  const { isConnected, messages, sendMessage, connectionError, reconnect } =
+    useWebSocket("ws://localhost:3000");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,7 +23,6 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
@@ -71,13 +38,30 @@ const ChatPage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-slate-800">
-                Анна Иванова
+                Group Chat
               </h1>
-              <p className="text-sm text-green-600">в сети</p>
+              <p
+                className={`text-sm ${
+                  isConnected ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {isConnected ? "в сети" : "не в сети"}
+              </p>
+              {connectionError && (
+                <p className="text-xs text-red-500">{connectionError}</p>
+              )}
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
+            {!isConnected && (
+              <button
+                onClick={reconnect}
+                className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors duration-200 text-sm font-medium"
+              >
+                🔄 Переподключить
+              </button>
+            )}
             <Link
               to="/"
               className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200 text-sm font-medium"
@@ -154,8 +138,7 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* Input Form */}
-      <ClientInputForm/>
-      
+      <ClientInputForm onSendMessage={sendMessage} isConnected={isConnected} />
     </div>
   );
 };
