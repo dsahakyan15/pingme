@@ -15,16 +15,6 @@ wss.on("connection", (ws) => {
   // Добавляем клиента в список
   clients.add(ws);
 
-  // Отправляем приветственное сообщение
-  ws.send(
-    JSON.stringify({
-      id: Date.now(),
-      text: "Добро пожаловать в чат!",
-      sender: "system",
-      timestamp: new Date().toLocaleTimeString("ru-RU"),
-    })
-  );
-
   // Обрабатываем входящие сообщения
   ws.on("message", (data) => {
     try {
