@@ -1,4 +1,4 @@
-const socket = new WebSocket("ws://192.168.11.67:3000");
+const socket = new WebSocket("wss://pingme-chat.loca.lt");
 
 socket.onopen = () => {
   console.log("WebSocket connection established");
