@@ -14,7 +14,7 @@ export interface Message {
 const ChatPage: React.FC = () => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
   const { isConnected, messages, sendMessage, connectionError, reconnect } =
-    useWebSocket("ws://192.168.11.67:3000");
+    useWebSocket("ws://localhost:3000");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
