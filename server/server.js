@@ -1,10 +1,19 @@
 const express = require("express");
 const WebSocket = require("ws");
 const http = require("http");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+// Middleware для обслуживания статических файлов
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+// Маршрут для корневого пути
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
 
 // Хранилище всех подключенных клиентов
 const clients = new Set();
@@ -64,7 +73,7 @@ wss.on("connection", (ws) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Сервер запущен на порту ${PORT}`);
-  console.log(`WebSocket доступен на ws://localhost:${PORT}`);
+  console.log(`WebSocket доступен на ws://192.168.11.67:${PORT}`);
 });
