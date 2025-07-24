@@ -4,12 +4,6 @@ import { Link } from "react-router-dom";
 import ClientInputForm from "../components/ClientInputForm";
 import { useWebSocket } from "../hooks/useWebSocket";
 
-export interface Message {
-  id: number;
-  text: string;
-  sender: "user" | "contact";
-  timestamp: string;
-}
 
 const ChatPage: React.FC = () => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
