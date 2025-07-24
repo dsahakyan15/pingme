@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { PaperAirplaneIcon } from "../widgets/simpleIcons";
-import type { Message } from "../pages/ChatPage";
+import type { Message } from "../types";
 
 interface ClientInputFormProps {
   onSendMessage: (message: Message) => void;

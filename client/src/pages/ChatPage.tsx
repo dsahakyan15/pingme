@@ -16,6 +16,8 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
+    console.log('----',messages);
+    
   }, [messages]);
 
   return (

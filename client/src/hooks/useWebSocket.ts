@@ -1,48 +1,51 @@
+// Импортируем необходимые хуки React
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { Message } from "../pages/ChatPage";
 
+// Импортируем тип сообщения (предполагаем, что он определен в types.ts)
+import type { Message } from "../types";
+
+// Кастомный хук для работы с WebSocket и загрузкой истории из БД
 export const useWebSocket = (url: string) => {
+  // Состояние подключения к серверу
   const [isConnected, setIsConnected] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    // Add some initial demo messages
-    {
-      id: 1,
-      text: "Привет! Как дела?",
-      sender: "contact",
-      timestamp: new Date(Date.now() - 300000).toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    },
-    {
-      id: 2,
-      text: "Привет! Все отлично, спасибо! А у тебя как дела?",
-      sender: "user",
-      timestamp: new Date(Date.now() - 240000).toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    },
-    {
-      id: 3,
-      text: "Тоже хорошо! Хочешь сходить куда-нибудь на выходных?",
-      sender: "contact",
-      timestamp: new Date(Date.now() - 180000).toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    },
-  ]);
+
+  // Список сообщений чата (инициализируется пустым, загружается из БД)
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  // Строка ошибки соединения (если есть)
   const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  // Ссылка на текущий WebSocket
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Счетчик попыток переподключения
   const reconnectAttempts = useRef(0);
+
+  // Максимальное количество попыток переподключения
   const maxReconnectAttempts = 5;
 
+  // Функция для загрузки истории сообщений из сервера (через HTTP)
+  const loadMessages = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:3000/messages'); // Укажите правильный URL сервера
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки сообщений');
+      }
+      const data: Message[] = await response.json();
+      setMessages(data); // Обновляем состояние сообщениями из БД
+    } catch (error) {
+      console.error('Ошибка загрузки сообщений:', error);
+      setConnectionError('Не удалось загрузить историю сообщений');
+    }
+  }, []);
+
+  // Функция для подключения к WebSocket
   const connect = useCallback(() => {
     try {
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
+      // Событие: соединение установлено
       ws.onopen = () => {
         console.log("WebSocket подключен");
         setIsConnected(true);
@@ -50,27 +53,25 @@ export const useWebSocket = (url: string) => {
         reconnectAttempts.current = 0;
       };
 
+      // Событие: получено сообщение от сервера
       ws.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data);
+          const message: Message = JSON.parse(event.data);
           console.log("Получено сообщение:", message);
-
           setMessages((prev) => [...prev, message]);
         } catch (error) {
           console.error("Ошибка при парсинге сообщения:", error);
         }
       };
 
+      // Событие: соединение закрыто
       ws.onclose = () => {
         console.log("WebSocket отключен");
         setIsConnected(false);
-
         // Автоматическое переподключение
         if (reconnectAttempts.current < maxReconnectAttempts) {
           reconnectAttempts.current++;
-          setConnectionError(
-            `Переподключение... (попытка ${reconnectAttempts.current})`
-          );
+          setConnectionError(`Переподключение... (попытка ${reconnectAttempts.current})`);
           setTimeout(() => {
             connect();
           }, 3000);
@@ -79,6 +80,7 @@ export const useWebSocket = (url: string) => {
         }
       };
 
+      // Событие: ошибка WebSocket
       ws.onerror = (error) => {
         console.error("Ошибка WebSocket:", error);
         setConnectionError("Ошибка соединения");
@@ -89,38 +91,44 @@ export const useWebSocket = (url: string) => {
     }
   }, [url]);
 
+  // Функция для отправки сообщения на сервер
   const sendMessage = useCallback((message: Message) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
-      // Also add the message to local state for immediate UI feedback
-      setMessages((prev) => [...prev, message]);
+      // Добавляем сообщение в локальное состояние для мгновенного отображения
+      // setMessages((prev) => [...prev, message])/
     } else {
       console.error("WebSocket is not connected");
       setConnectionError("Не удалось отправить сообщение: нет подключения");
     }
   }, []);
 
+  // Функция для ручного переподключения к серверу
   const reconnect = useCallback(() => {
     reconnectAttempts.current = 0;
     setConnectionError(null);
     connect();
   }, [connect]);
 
+  // Эффект: подключаемся к серверу и загружаем историю при монтировании
   useEffect(() => {
-    connect();
+    loadMessages(); // Сначала загружаем историю из БД
+    connect(); // Затем подключаемся к WebSocket
 
+    // Отключаемся от сервера при размонтировании
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
       }
     };
-  }, [connect]);
+  }, [connect, loadMessages]);
 
+  // Возвращаем все необходимые данные и методы
   return {
-    isConnected,
-    messages,
-    sendMessage,
-    connectionError,
-    reconnect,
+    isConnected, // статус подключения
+    messages, // список сообщений
+    sendMessage, // функция отправки сообщения
+    connectionError, // строка ошибки соединения
+    reconnect, // функция переподключения
   };
 };
