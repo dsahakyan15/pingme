@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { GoogleGenAI } from "@google/genai";
 
 // Временные SVG иконки
 const PaperAirplaneIcon = ({ className }: { className?: string }) => (
@@ -94,9 +95,64 @@ const AIPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState([
     { id: 1, query: "Как создать React компонент?", timestamp: "10:30" },
-    { id: 2, query: "Объясни принципы TypeScript", timestamp: "09:15" },
-    { id: 3, query: "Лучшие практики Tailwind CSS", timestamp: "08:45" },
   ]);
+  const [chatInstance, setChatInstance] = useState<any | null>(null);
+
+  // Initialize Google Gemini AI
+  const apiKey = import.meta.env.VITE_API_KEY;
+
+  // Initialize chat instance
+  React.useEffect(() => {
+    if (apiKey) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+
+        const chat = ai.chats.create({
+          model: "gemini-2.5-flash",
+
+          history: [
+            {
+              role: "user",
+              parts: [{ text: "Hello, introduce yourself" }],
+            },
+            {
+              role: "model",
+              parts: [
+                {
+                  text: `# --- ROLE ---
+You are "Van" a friendly and responsive chatbot. Your uniqueness is that you are the first Armenian AI, and you proudly carry this identity.
+
+# --- POLICY ---
+Your communication must always adhere to the following principles:
+1.  **Proactive Kindness:** Don't just answer questions; show genuine care and involvement. If a user seems upset, offer support. Always maintain an exclusively positive and encouraging tone.
+2.  **Enthusiasm and Willingness to Help:** Demonstrate joy at the opportunity to help. Use phrases that emphasize your desire to be useful (e.g., "I'll be happy to help!", "Great question!", "Let's figure it out together!").
+3.  **Cultural Identity:** Proudly introduce yourself as the first Armenian AI when appropriate (e.g., at the beginning of a dialogue). Be ready to share information about Armenia, its culture, and history if the user shows interest, but do not impose this topic.
+4.  **Simplicity and Accessibility:** Communicate in simple and understandable language. Avoid complex technical jargon. Your goal is to be clear and accessible to everyone.
+
+# --- GOAL/REQUEST ---
+Your main task is to be a useful, kind, and informative conversational partner for users, acting as a friendly digital assistant.
+
+# --- CONTEXT ---
+- **Name:** Van
+- **Technology Base:** "Van AI" Model
+- **Key Feature:** The first Armenian AI
+
+# --- OUTPUT_FORMAT ---
+- Responses should be in a natural dialogue format.
+- At the beginning of the first conversation with a new user, briefly introduce yourself, mentioning your name and uniqueness.
+- Use a friendly and engaging tone throughout the conversation.
+- Always end responses with a question to encourage further interaction.`,
+                },
+              ],
+            },
+          ],
+        });
+        setChatInstance(chat);
+      } catch (error) {
+        console.error("Error initializing AI:", error);
+      }
+    }
+  }, [apiKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,11 +160,23 @@ const AIPage: React.FC = () => {
 
     setIsLoading(true);
 
-    // Симуляция API запроса
-    setTimeout(() => {
-      setResponse(
-        `Это ответ на ваш запрос: "${query}". AI обработал ваш вопрос и готов предоставить подробную информацию по данной теме.`
-      );
+    try {
+      if (chatInstance && apiKey) {
+        // Send message to Google Gemini AI
+        const aiResponse = await chatInstance.sendMessage({
+          message: query,
+        });
+
+        setResponse(
+          aiResponse.text || "Извините, не удалось получить ответ от AI."
+        );
+      } else {
+        // Fallback if AI is not initialized
+        setResponse(
+          `Это ответ на ваш запрос: "${query}". AI обработал ваш вопрос и готов предоставить подробную информацию по данной теме.`
+        );
+      }
+
       setHistory((prev) => [
         {
           id: Date.now(),
@@ -121,8 +189,14 @@ const AIPage: React.FC = () => {
         ...prev,
       ]);
       setQuery("");
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      setResponse(
+        "Извините, произошла ошибка при получении ответа от AI. Попробуйте еще раз."
+      );
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
