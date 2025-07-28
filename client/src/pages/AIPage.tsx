@@ -1,6 +1,6 @@
 import React from "react";
 import { useAIChat, useQueryHistory } from "../hooks";
-import { Sidebar, Header, ChatArea, MessageInput } from "../components";
+import { Sidebar, ChatArea, MessageInput, Header } from "../components";
 
 const AIPage: React.FC = () => {
   const apiKey = import.meta.env.VITE_API_KEY;

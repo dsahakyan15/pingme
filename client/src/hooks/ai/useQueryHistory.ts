@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatTimestamp, generateId } from "../utils/common";
+import { formatTimestamp, generateId } from "../../utils/common";
 
 export interface QueryHistoryItem {
   id: number;

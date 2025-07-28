@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { GoogleGenAI } from "@google/genai";
-import type { ChatMessage } from "../types";
-import { formatTimestamp } from "../utils/common";
+import type { ChatMessage } from "../../types";
+import { formatTimestamp } from "../../utils/common";
 
 interface UseAIChatProps {
   apiKey?: string;

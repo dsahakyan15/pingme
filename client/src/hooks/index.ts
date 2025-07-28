@@ -1,4 +1,5 @@
 // Hook exports for easy importing
-export { useAIChat } from "./useAIChat";
-export { useQueryHistory } from "./useQueryHistory";
-export type { QueryHistoryItem } from "./useQueryHistory";
+
+// AI Hooks
+export { useAIChat, useQueryHistory } from "./ai";
+export type { QueryHistoryItem } from "./ai";
