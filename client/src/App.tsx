@@ -2,7 +2,6 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import AIPage from "./pages/AIPage";
 import ChatPage from "./pages/ChatPage";
-import "./test.js";
 
 // Компонент главной страницы с навигацией
 const HomePage: React.FC = () => {
