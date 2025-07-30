@@ -96,6 +96,7 @@ export const useWebSocket = (url: string) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
       // Добавляем сообщение в локальное состояние для мгновенного отображения
+      // setMessages((prev) => [...prev, message])/
     } else {
       console.error("WebSocket is not connected");
       setConnectionError("Не удалось отправить сообщение: нет подключения");
