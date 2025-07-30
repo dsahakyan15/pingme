@@ -26,6 +26,7 @@ db.serialize(() => {
     message TEXT NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+  db.run('DELETE FROM messages');
 });
 
 // REST-эндпоинт для получения истории сообщений (через HTTP-запрос)
@@ -38,9 +39,9 @@ app.get('/messages', (req, res) => {
       return res.status(500).json({ error: err.message });
     }
     // Преобразуем поле message -> text для совместимости с клиентом
-    const formattedRows = rows.map(row => ({
+    const formattedRows = rows.map((row) => ({
       ...row,
-      text: row.message // добавляем поле text
+      text: row.message, // добавляем поле text
     }));
     // Отправляем массив сообщений в формате JSON
     res.json(formattedRows);
