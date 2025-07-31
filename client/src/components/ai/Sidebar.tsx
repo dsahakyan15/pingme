@@ -1,5 +1,5 @@
 import React from "react";
-import { ClockIcon } from "../Icons";
+import { ClockIcon } from "../../widgets/simpleIcons";
 import type { QueryHistoryItem } from "../../hooks/ai/useQueryHistory";
 
 interface SidebarProps {

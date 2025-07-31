@@ -1,6 +1,6 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import { SparklesIcon } from "../Icons";
+import { SparklesIcon } from "../../widgets/simpleIcons";
 import type { ChatMessage } from "../../types";
 
 interface ChatAreaProps {

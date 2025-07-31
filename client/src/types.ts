@@ -1,8 +1,9 @@
 export interface Message {
   id: number;
   text: string;
-  sender: "user" | "contact";
-  timestamp: string;
+  senderId: number;
+  sendetAt: string;
+  conversationId: number;
 }
 
 export interface ChatMessage {

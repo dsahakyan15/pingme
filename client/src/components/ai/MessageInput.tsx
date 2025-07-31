@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PaperAirplaneIcon } from "../Icons";
+import { PaperAirplaneIcon } from "../../widgets/simpleIcons";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;

@@ -61,7 +61,7 @@ wss.on('connection', (ws) => {
       // Сохраняем сообщение в базу данных
       db.run(
         'INSERT INTO messages (user, message) VALUES (?, ?)',
-        [msg.user || 'contact', msg.text], // Если user не указан, используем 'contact'
+        [msg.userId || 'contact', msg.text], // Если user не указан, используем 'contact'
         (err) => {
           if (err) {
             console.error('Ошибка сохранения в БД:', err);

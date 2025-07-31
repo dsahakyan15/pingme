@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { SparklesIcon, ChatBubbleLeftRightIcon } from "../Icons";
+import { SparklesIcon, ChatBubbleLeftRightIcon } from "../../widgets/simpleIcons";
 
 interface HeaderProps {
   onClearChat: () => void;
