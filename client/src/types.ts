@@ -1,11 +1,16 @@
 export interface Message {
-  id: number;
+  type: "message";
+  message_id: number;
+  conversation_id: number;
+  sender_id: number;
   text: string;
-  senderId: number;
-  sendetAt: string;
-  conversationId: number;
+  sent_at: string;
 }
-
+export interface User {
+  type: "user";
+  id: number;
+  username: string;
+}
 export interface ChatMessage {
   role: "user" | "model";
   content: string;

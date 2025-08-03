@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 // Импортируем тип сообщения (предполагаем, что он определен в types.ts)
-import type { Message } from "../types";
+import type { Message,User } from "../types";
 
 // Кастомный хук для работы с WebSocket и загрузкой истории из БД
 export const useWebSocket = (url: string) => {
@@ -92,7 +92,7 @@ export const useWebSocket = (url: string) => {
   }, [url]);
 
   // Функция для отправки сообщения на сервер
-  const sendMessage = useCallback((message: Message) => {
+  const sendMessage = useCallback((message: Message | User) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
       // Добавляем сообщение в локальное состояние для мгновенного отображения

@@ -1,18 +1,33 @@
 import React, { useState } from 'react';
+import type { User } from '../types';
 
 interface UserLoginFormProps {
-  onLogin: (username: string) => void;
+  setSender: React.Dispatch<React.SetStateAction<string>>;
+  onSendMessage: (message: User) => void;
 }
 
-const UserLoginForm: React.FC<UserLoginFormProps> = ({ onLogin }) => {
+const UserLoginForm: React.FC<UserLoginFormProps> = ({ setSender, onSendMessage }) => {
   const [username, setUsername] = useState('');
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (username.trim()) {
-      onLogin(username.trim());
+      setSender(username.trim());
     }
   };
+
+
+
+  const msgSendBtn = () => {
+    if (!username.trim()) return;
+    const newUser: User = {
+      type: "user",
+      id: Date.now(),
+      username: username.trim(),
+    };
+    // Отправляем сообщение через переданную функцию
+    onSendMessage(newUser);
+  }
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -39,6 +54,7 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onLogin }) => {
           <div>
             <button
               type="submit"
+              onClick={msgSendBtn}
               className="w-full px-4 py-2 font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Enter

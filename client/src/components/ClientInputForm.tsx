@@ -5,13 +5,13 @@ import type { Message } from "../types";
 interface ClientInputFormProps {
   onSendMessage: (message: Message) => void;
   isConnected?: boolean;
-  userId?:string;
+  user_id?: number;
 }
 
 const ClientInputForm: React.FC<ClientInputFormProps> = ({
   onSendMessage,
   isConnected = false,
-  userId
+  user_id = 2, // Default user_id if not provided
 }) => {
   const [message, setMessage] = useState("");
 
@@ -20,11 +20,12 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
     if (!message.trim()) return;
 
     const newMessage: Message = {
-      id: Date.now(),
+      type: "message",
+      message_id: Date.now(),
       text: message,
-      senderId: 1,
-      conversationId: 1, // Assuming a single conversation for simplicity
-      sendetAt: new Date().toLocaleTimeString("ru-RU", {
+      sender_id: user_id,
+      conversation_id: 1, // Assuming a single conversation for simplicity
+      sent_at: new Date().toLocaleTimeString("ru-RU", {
         hour: "2-digit",
         minute: "2-digit",
       }),
