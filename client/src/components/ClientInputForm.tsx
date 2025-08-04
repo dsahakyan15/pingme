@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { PaperAirplaneIcon } from "../widgets/simpleIcons";
-import type { Message } from "../types";
+import React, { useState } from 'react';
+import { PaperAirplaneIcon } from '../widgets/simpleIcons';
+import type { Message } from '../types/types';
 
 interface ClientInputFormProps {
   onSendMessage: (message: Message) => void;
@@ -13,27 +13,27 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
   isConnected = false,
   user_id = 2, // Default user_id if not provided
 }) => {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 
     const newMessage: Message = {
-      type: "message",
+      type: 'message',
       message_id: Date.now(),
       text: message,
       sender_id: user_id,
       conversation_id: 1, // Assuming a single conversation for simplicity
-      sent_at: new Date().toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit",
+      sent_at: new Date().toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
       }),
     };
 
     // Отправляем сообщение через переданную функцию
     onSendMessage(newMessage);
-    setMessage("");
+    setMessage('');
   };
 
   return (
@@ -48,7 +48,7 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
               className="w-full p-3 border border-slate-300 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm hover:shadow-md"
               rows={1}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSubmit(e);
                 }
@@ -63,9 +63,7 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
             <PaperAirplaneIcon className="h-5 w-5" />
           </button>
         </form>
-        {!isConnected && (
-          <p className="text-sm text-red-500 mt-2">WebSocket не подключен</p>
-        )}
+        {!isConnected && <p className="text-sm text-red-500 mt-2">WebSocket не подключен</p>}
       </div>
     </div>
   );

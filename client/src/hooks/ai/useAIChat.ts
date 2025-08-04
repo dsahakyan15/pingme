@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { GoogleGenAI } from "@google/genai";
-import type { ChatMessage } from "../../types";
-import { formatTimestamp } from "../../utils/common";
+import { useState, useEffect } from 'react';
+import { GoogleGenAI } from '@google/genai';
+import type { ChatMessage } from '../../types/types';
+import { formatTimestamp } from '../../utils/common';
 
 interface UseAIChatProps {
   apiKey?: string;
@@ -29,14 +29,14 @@ export const useAIChat = ({ apiKey }: UseAIChatProps): UseAIChatReturn => {
         const ai = new GoogleGenAI({ apiKey });
 
         const chat = ai.chats.create({
-          model: "gemini-2.5-flash",
+          model: 'gemini-2.5-flash',
           history: [
             {
-              role: "user",
-              parts: [{ text: "Hello, introduce yourself" }],
+              role: 'user',
+              parts: [{ text: 'Hello, introduce yourself' }],
             },
             {
-              role: "model",
+              role: 'model',
               parts: [
                 {
                   text: `# --- ROLE ---
@@ -69,7 +69,7 @@ Your main task is to be a useful, kind, and informative conversational partner f
         });
         setChatInstance(chat);
       } catch (error) {
-        console.error("Error initializing AI:", error);
+        console.error('Error initializing AI:', error);
       }
     }
   }, [apiKey]);
@@ -81,7 +81,7 @@ Your main task is to be a useful, kind, and informative conversational partner f
 
     // Add user message to chat history
     const userMessage: ChatMessage = {
-      role: "user",
+      role: 'user',
       content: message.trim(),
       timestamp: formatTimestamp(),
     };
@@ -96,9 +96,8 @@ Your main task is to be a useful, kind, and informative conversational partner f
         });
 
         const aiMessage: ChatMessage = {
-          role: "model",
-          content:
-            aiResponse.text || "Sorry, failed to get a response from the AI.",
+          role: 'model',
+          content: aiResponse.text || 'Sorry, failed to get a response from the AI.',
           timestamp: formatTimestamp(),
         };
 
@@ -107,18 +106,17 @@ Your main task is to be a useful, kind, and informative conversational partner f
       } else {
         // Fallback if AI is not initialized
         const fallbackMessage: ChatMessage = {
-          role: "model",
+          role: 'model',
           content: `This is a response to your query: "${message}". The AI has processed your question and is ready to provide detailed information on this topic.`,
           timestamp: formatTimestamp(),
         };
         setChatMessages((prev) => [...prev, fallbackMessage]);
       }
     } catch (error) {
-      console.error("Error getting AI response:", error);
+      console.error('Error getting AI response:', error);
       const errorMessage: ChatMessage = {
-        role: "model",
-        content:
-          "Sorry, an error occurred while getting a response from the AI. Please try again.",
+        role: 'model',
+        content: 'Sorry, an error occurred while getting a response from the AI. Please try again.',
         timestamp: formatTimestamp(),
       };
       setChatMessages((prev) => [...prev, errorMessage]);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { User } from '../types';
+import type { User } from '../types/types';
 
 interface UserLoginFormProps {
   setSender: React.Dispatch<React.SetStateAction<string>>;
@@ -16,25 +16,21 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ setSender, onSendMessage 
     }
   };
 
-
-
   const msgSendBtn = () => {
     if (!username.trim()) return;
     const newUser: User = {
-      type: "user",
+      type: 'user',
       id: Date.now(),
       username: username.trim(),
     };
     // Отправляем сообщение через переданную функцию
     onSendMessage(newUser);
-  }
+  };
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
       <div className="w-full max-w-xs p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800">
-          Join Chat
-        </h2>
+        <h2 className="text-2xl font-bold text-center text-gray-800">Join Chat</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="username" className="text-sm font-semibold text-gray-600 sr-only">

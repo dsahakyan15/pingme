@@ -1,8 +1,8 @@
 // Импортируем необходимые хуки React
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 // Импортируем тип сообщения (предполагаем, что он определен в types.ts)
-import type { Message,User } from "../types";
+import type { Message, User } from '../types/types';
 
 // Кастомный хук для работы с WebSocket и загрузкой истории из БД
 export const useWebSocket = (url: string) => {
@@ -47,7 +47,7 @@ export const useWebSocket = (url: string) => {
 
       // Событие: соединение установлено
       ws.onopen = () => {
-        console.log("WebSocket подключен");
+        console.log('WebSocket подключен');
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttempts.current = 0;
@@ -57,16 +57,16 @@ export const useWebSocket = (url: string) => {
       ws.onmessage = (event) => {
         try {
           const message: Message = JSON.parse(event.data);
-          console.log("Получено сообщение:", message);
+          console.log('Получено сообщение:', message);
           setMessages((prev) => [...prev, message]);
         } catch (error) {
-          console.error("Ошибка при парсинге сообщения:", error);
+          console.error('Ошибка при парсинге сообщения:', error);
         }
       };
 
       // Событие: соединение закрыто
       ws.onclose = () => {
-        console.log("WebSocket отключен");
+        console.log('WebSocket отключен');
         setIsConnected(false);
         // Автоматическое переподключение
         if (reconnectAttempts.current < maxReconnectAttempts) {
@@ -76,18 +76,18 @@ export const useWebSocket = (url: string) => {
             connect();
           }, 3000);
         } else {
-          setConnectionError("Не удалось подключиться к серверу");
+          setConnectionError('Не удалось подключиться к серверу');
         }
       };
 
       // Событие: ошибка WebSocket
       ws.onerror = (error) => {
-        console.error("Ошибка WebSocket:", error);
-        setConnectionError("Ошибка соединения");
+        console.error('Ошибка WebSocket:', error);
+        setConnectionError('Ошибка соединения');
       };
     } catch (error) {
-      console.error("Ошибка при создании WebSocket:", error);
-      setConnectionError("Не удалось создать соединение");
+      console.error('Ошибка при создании WebSocket:', error);
+      setConnectionError('Не удалось создать соединение');
     }
   }, [url]);
 
@@ -98,8 +98,8 @@ export const useWebSocket = (url: string) => {
       // Добавляем сообщение в локальное состояние для мгновенного отображения
       // setMessages((prev) => [...prev, message])/
     } else {
-      console.error("WebSocket is not connected");
-      setConnectionError("Не удалось отправить сообщение: нет подключения");
+      console.error('WebSocket is not connected');
+      setConnectionError('Не удалось отправить сообщение: нет подключения');
     }
   }, []);
 

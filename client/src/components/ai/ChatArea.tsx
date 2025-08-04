@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { SparklesIcon } from '../../widgets/simpleIcons';
-import type { ChatMessage } from '../../types';
+import type { ChatMessage } from '../../types/types';
 import AIMessage from './AIMessage';
 import UserMessage from './UserMessage';
 
