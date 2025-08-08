@@ -1,4 +1,4 @@
-import Message from '../ui/Message';
+import Message from './ui/Message';
 
 interface ChatMessageProps {
   msg: {
@@ -7,9 +7,10 @@ interface ChatMessageProps {
   };
   isCurrentUser: boolean;
   senderId: number;
+  senderName?: string;
 }
 
-const ChatMessage = ({ msg, isCurrentUser, senderId }: ChatMessageProps) => {
+const ChatMessage = ({ msg, isCurrentUser, senderId, senderName }: ChatMessageProps) => {
   return (
     <Message
       text={msg.text}
@@ -17,6 +18,7 @@ const ChatMessage = ({ msg, isCurrentUser, senderId }: ChatMessageProps) => {
       isCurrentUser={isCurrentUser}
       variant="chat"
       senderId={senderId}
+      senderName={senderName}
     />
   );
 };

@@ -1,4 +1,4 @@
-import Message from '../ui/Message';
+import Message from '../chat/ui/Message';
 
 interface AIMessageProps {
   text: string;

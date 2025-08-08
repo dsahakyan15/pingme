@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import type { User } from '../types/types';
+import type { EventPayloadMap, OutgoingEventType } from '../types/types';
 
 interface UserLoginFormProps {
   setSender: React.Dispatch<React.SetStateAction<string>>;
-  onSendMessage: (message: User) => void;
+  onSendMessage: <T extends OutgoingEventType>(type: T, data: EventPayloadMap[T]) => void;
 }
 
 const UserLoginForm: React.FC<UserLoginFormProps> = ({ setSender, onSendMessage }) => {
@@ -13,18 +13,8 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ setSender, onSendMessage 
     e.preventDefault();
     if (username.trim()) {
       setSender(username.trim());
+      onSendMessage('user.register', { username: username.trim() });
     }
-  };
-
-  const msgSendBtn = () => {
-    if (!username.trim()) return;
-    const newUser: User = {
-      type: 'user',
-      id: Date.now(),
-      username: username.trim(),
-    };
-    // Отправляем сообщение через переданную функцию
-    onSendMessage(newUser);
   };
 
   return (
@@ -50,7 +40,6 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ setSender, onSendMessage 
           <div>
             <button
               type="submit"
-              onClick={msgSendBtn}
               className="w-full px-4 py-2 font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Enter

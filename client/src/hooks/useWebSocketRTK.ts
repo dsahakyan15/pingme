@@ -10,8 +10,12 @@ import {
   selectIsReconnecting,
   selectReconnectAttempts,
   selectLatestMessage,
+  selectChatMessages,
+  selectCurrentUser,
 } from '../app/selectors/websocketSelectors';
 import type { ConnectPayload, SendMessagePayload } from '../types/WebSocketTypes';
+import type { OutgoingEventType, EventPayloadMap } from '../types/types';
+import type { RootState } from '../app/store';
 
 export const useWebSocketRTK = () => {
   const dispatch = useDispatch();
@@ -19,11 +23,14 @@ export const useWebSocketRTK = () => {
   const connectionStatus = useSelector(selectConnectionStatus);
   const isConnected = useSelector(selectIsConnected);
   const isConnecting = useSelector(selectIsConnecting);
-  const messages = useSelector(selectWebSocketMessages);
+  const rawMessages = useSelector(selectWebSocketMessages);
+  const chatMessages = useSelector(selectChatMessages);
   const error = useSelector(selectWebSocketError);
   const isReconnecting = useSelector(selectIsReconnecting);
   const reconnectAttempts = useSelector(selectReconnectAttempts);
   const latestMessage = useSelector(selectLatestMessage);
+  const currentUser = useSelector(selectCurrentUser);
+  const currentUrl = useSelector((s: RootState) => s.websocket.url);
 
   const handleConnect = useCallback(
     (url: string, protocols?: string | string[]) => {
@@ -38,8 +45,8 @@ export const useWebSocketRTK = () => {
   }, [dispatch]);
 
   const handleSendMessage = useCallback(
-    (type: string, data: unknown) => {
-      const payload: SendMessagePayload = { type, data };
+    <T extends OutgoingEventType>(type: T, data: EventPayloadMap[T], options?: { optimisticId?: string }) => {
+      const payload: SendMessagePayload<T> = { type, data, meta: { optimisticId: options?.optimisticId } };
       dispatch(sendMessage(payload));
     },
     [dispatch]
@@ -49,17 +56,28 @@ export const useWebSocketRTK = () => {
     dispatch(clearMessages());
   }, [dispatch]);
 
+  const handleReconnect = useCallback(() => {
+    if (!currentUrl) return;
+    if (isConnecting) return;
+    if (connectionStatus === 'connected') return;
+    dispatch(connect({ url: currentUrl }));
+  }, [currentUrl, isConnecting, connectionStatus, dispatch]);
+
   return {
     connectionStatus,
     isConnected,
     isConnecting,
-    messages,
+    messages: rawMessages,
+    chatMessages,
     error,
     isReconnecting,
     reconnectAttempts,
     latestMessage,
+    currentUser,
+    url: currentUrl,
     connect: handleConnect,
     disconnect: handleDisconnect,
+    reconnect: handleReconnect,
     sendMessage: handleSendMessage,
     clearMessages: handleClearMessages,
   };

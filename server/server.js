@@ -68,6 +68,21 @@ app.get('/messages', (req, res) => {
   });
 });
 
+function broadcast(jsonObj) {
+  const payload = JSON.stringify(jsonObj);
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  });
+}
+
+function send(ws, jsonObj) {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(jsonObj));
+  }
+}
+
 // Обработка новых WebSocket-подключений
 wss.on('connection', (ws) => {
   console.log('Новый клиент подключился, всего подключено:', wss.clients.size);
@@ -77,37 +92,101 @@ wss.on('connection', (ws) => {
     try {
       // Парсим JSON из входящих данных
       const msg = JSON.parse(data);
-      if (msg.type == 'message') {
-        // Сохраняем сообщение в базу данных
+      // Поддержка нового протокола: { type: 'message.send', data: {...} }
+      if (msg.type === 'message.send' && msg.data) {
+        const { conversation_id = 1, sender_id, text } = msg.data;
+        if (!sender_id || !text) return;
         db.run(
-          'INSERT INTO messages (conversation_id,sender_id, message_text) VALUES (1,?, ?)',
-          [msg.sender_id, msg.text], // Если sender_id не указан, используем 1
-          (err) => {
+          'INSERT INTO messages (conversation_id, sender_id, message_text) VALUES (?,?,?)',
+          [conversation_id, sender_id, text],
+          function (err) {
             if (err) {
-              console.error('Ошибка сохранения в БД:', err);
+              console.error('Ошибка сохранения в БД (message.send):', err);
+              return;
             }
+            const messageEnvelope = {
+              type: 'message',
+              data: {
+                type: 'message',
+                message_id: this.lastID,
+                conversation_id,
+                sender_id,
+                text,
+                sent_at: new Date().toISOString(),
+              },
+            };
+            broadcast(messageEnvelope);
           }
         );
-
-        // Подготавливаем сообщение для рассылки (добавляем timestamp)
-        const messageToSend = {
-          ...msg,
-          timestamp: new Date().toLocaleTimeString('ru-RU'),
-        };
-
-        // Рассылаем сообщение всем подключенным клиентам
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(messageToSend));
-          }
-        });
-      } else if (msg.type == 'user') {
-        // Сохраняем пользователя в базу данных
-        db.run('INSERT OR IGNORE INTO users (username) VALUES (?)', [msg.username], (err) => {
+      } else if (msg.type === 'user.register' && msg.data) {
+        const { username } = msg.data;
+        if (!username) return;
+        db.run('INSERT OR IGNORE INTO users (username) VALUES (?)', [username], (err) => {
           if (err) {
-            console.error('Ошибка сохранения пользователя в БД:', err);
+            console.error('Ошибка сохранения пользователя (user.register):', err);
           }
+          db.get('SELECT user_id, username FROM users WHERE username = ?', [username], (selErr, row) => {
+            if (selErr) {
+              console.error('Ошибка выборки пользователя:', selErr);
+              return;
+            }
+            if (!row) return;
+            const userEnvelope = {
+              type: 'user',
+              data: { type: 'user', id: row.user_id, username: row.username },
+            };
+            // Отправляем только инициатору регистрацию + можно вещать всем (решили вещать всем)
+            broadcast(userEnvelope);
+          });
         });
+      } else if (msg.type === 'message') { // legacy формат: { type:'message', sender_id, text }
+        const { conversation_id = 1, sender_id, text } = msg;
+        if (!sender_id || !text) return;
+        db.run(
+          'INSERT INTO messages (conversation_id, sender_id, message_text) VALUES (?,?,?)',
+          [conversation_id, sender_id, text],
+          function (err) {
+            if (err) {
+              console.error('Ошибка сохранения в БД (legacy message):', err);
+              return;
+            }
+            const messageEnvelope = {
+              type: 'message',
+              data: {
+                type: 'message',
+                message_id: this.lastID,
+                conversation_id,
+                sender_id,
+                text,
+                sent_at: new Date().toISOString(),
+              },
+            };
+            broadcast(messageEnvelope);
+          }
+        );
+      } else if (msg.type === 'user') { // legacy user
+        const { username } = msg;
+        if (!username) return;
+        db.run('INSERT OR IGNORE INTO users (username) VALUES (?)', [username], (err) => {
+          if (err) {
+            console.error('Ошибка сохранения пользователя (legacy user):', err);
+          }
+          db.get('SELECT user_id, username FROM users WHERE username = ?', [username], (selErr, row) => {
+            if (selErr) {
+              console.error('Ошибка выборки пользователя:', selErr);
+              return;
+            }
+            if (!row) return;
+            const userEnvelope = {
+              type: 'user',
+              data: { type: 'user', id: row.user_id, username: row.username },
+            };
+            broadcast(userEnvelope);
+          });
+        });
+      } else {
+        // Неизвестный тип — можно логировать
+        console.warn('Необработанный тип сообщения:', msg.type);
       }
     } catch (error) {
       console.error('Ошибка при обработке сообщения:', error);

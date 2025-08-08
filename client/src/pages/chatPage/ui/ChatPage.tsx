@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react';
 
 import ClientInputForm from '../../../components/ClientInputForm';
-import { useWebSocket } from '../../../hooks/useWebSocket';
+import { useWebSocketRTK } from '../../../hooks/useWebSocketRTK';
 import UserLoginForm from '../../../components/UserLoginForm';
 import Header from './components/Header';
 import ChatMessage from '../../../components/chat/ChatMessage';
+import type { Message } from '../../../types/types';
+import { useAppSelector } from '../../../app/hooks';
 
 const ChatPage: React.FC = () => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
-  const { isConnected, messages, sendMessage, connectionError, reconnect } =
-    useWebSocket('ws://localhost:3000');
+  const { isConnected, chatMessages, sendMessage, error, connect, currentUser } = useWebSocketRTK();
+  const usersMap = useAppSelector((s) => (s.websocket.userMap ?? {}));
+
+  useEffect(() => {
+    connect('ws://localhost:3000');
+  }, [connect]);
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [sender, setSender] = useState<string>('');
 
@@ -25,38 +32,27 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-    console.log('----', messages);
-  }, [messages]);
+  }, [chatMessages]);
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
       {!isAuthenticated ? (
-        <>
-          <UserLoginForm setSender={setSender} onSendMessage={sendMessage} />
-        </>
+        <UserLoginForm setSender={setSender} onSendMessage={sendMessage} />
       ) : (
         <>
-          {/* Header */}
-          <Header
-            isConnected={isConnected}
-            connectionError={connectionError || undefined}
-            reconnect={reconnect}
-          />
-          {/* Messages Area */}
+          <Header isConnected={isConnected} connectionError={error || undefined} />
           <div className="flex-1 overflow-y-auto p-4">
             <div className="max-w-4xl mx-auto space-y-4">
-              {messages.map((msg, index) => {
-                const isCurrentUser = msg.sender_id === 1; // TODO: заменить на динамическое сравнение с текущим пользователем
+              {chatMessages.map((msg: Message, index) => {
+                const isCurrentUser = currentUser ? msg.sender_id === currentUser.id : false;
+                const senderName = usersMap[msg.sender_id]?.username;
                 return (
                   <div
                     key={msg.message_id}
-                    className={`flex animate-in fade-in slide-in-from-bottom-3 ${
-                      isCurrentUser ? 'justify-end' : 'justify-start'
-                    }`}
+                    className={`flex animate-in fade-in slide-in-from-bottom-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <ChatMessage msg={msg} isCurrentUser={isCurrentUser} 
-                    senderId={msg.sender_id} />
+                    <ChatMessage msg={msg} isCurrentUser={isCurrentUser} senderId={msg.sender_id} senderName={senderName} />
                   </div>
                 );
               })}
@@ -64,9 +60,7 @@ const ChatPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Input Form */}
-          {/* TODO qcel username-in server heto ira id-n nor ste tal,jmnk 1 a drac */}
-          <ClientInputForm onSendMessage={sendMessage} user_id={1} isConnected={isConnected} />
+          <ClientInputForm onSendMessage={sendMessage} user_id={currentUser?.id} isConnected={isConnected} />
         </>
       )}
     </div>

@@ -62,14 +62,14 @@ const MyComponent = () => {
   const { isConnected, messages, error, connect, disconnect, sendMessage } = useWebSocketRTK();
 
   const handleConnect = () => {
-    connect('ws://localhost:8080');
+    connect('ws://localhost:');
   };
 
   const handleSendMessage = () => {
     sendMessage('chat', { text: 'Hello World!' });
   };
 
-  return (
+  return ( 
     <div>
       <button onClick={handleConnect} disabled={isConnected}>
         Connect

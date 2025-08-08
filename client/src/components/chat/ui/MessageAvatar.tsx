@@ -1,4 +1,4 @@
-import { UserIcon } from '../../widgets/simpleIcons';
+import { UserIcon } from '../../../widgets/simpleIcons';
 
 interface MessageAvatarProps {
   variant: 'ai' | 'user' | 'other';
