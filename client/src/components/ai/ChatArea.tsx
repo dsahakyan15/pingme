@@ -20,10 +20,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatMessages, isLoading }) =
   }, [chatMessages, isLoading]);
 
   return (
-    <div className="flex-1 mb-6 overflow-y-auto">
+    <div className="flex-1 mb-6 overflow-y-auto h-[94%]">
       <div
         ref={chatContainerRef}
-        className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200 shadow-sm p-6 min-h-[500px] max-h-[500px] overflow-y-auto"
+        className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200 shadow-sm p-6 min-h-[100%] max-h-[100%] overflow-y-auto"
       >
         {chatMessages.length === 0 ? (
           <div className="text-center text-slate-400 mt-20">

@@ -1,6 +1,6 @@
-import React from "react";
-import { useAIChat, useQueryHistory } from "../hooks";
-import { Sidebar, ChatArea, MessageInput, Header } from "../components";
+import React from 'react';
+import { useAIChat, useQueryHistory } from '../hooks';
+import { Sidebar, ChatArea, MessageInput, Header } from '../components';
 
 const AIPage: React.FC = () => {
   const apiKey = import.meta.env.VITE_API_KEY;
@@ -19,20 +19,19 @@ const AIPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50 flex">
       <Sidebar history={history} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         <Header onClearChat={handleClearChat} />
 
         {/* Chat Area */}
-        <div className="flex-1 p-6 flex flex-col w-full">
-          <ChatArea chatMessages={chatMessages} isLoading={isLoading} />
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-          />
+        <div className="flex-1 min-h-0 p-6 flex flex-col w-full">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <ChatArea chatMessages={chatMessages} isLoading={isLoading} />
+          </div>
+          <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
         </div>
       </div>
     </div>
