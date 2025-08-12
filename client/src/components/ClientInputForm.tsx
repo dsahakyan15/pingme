@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { PaperAirplaneIcon } from '../widgets/simpleIcons';
 import type { EventPayloadMap, OutgoingEventType } from '../types/types';
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface ClientInputFormProps {
   onSendMessage: <T extends OutgoingEventType>(type: T, data: EventPayloadMap[T]) => void;
@@ -29,6 +38,12 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
     setMessage('');
   };
 
+  const onCorrection = (e) => {
+    //
+    
+
+  }
+
   return (
     <div className="border-t border-slate-200 bg-white/80 backdrop-blur-sm p-4 animate-in fade-in slide-in-from-bottom-5">
       <div className="max-w-4xl mx-auto">
@@ -48,6 +63,25 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
               }}
             />
           </div>
+
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">/</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  Improve the text 
+                  <DropdownMenuShortcut>⇧⌘F</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  Correction
+                  <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button
             type="submit"
             disabled={!message.trim() || !isConnected || !user_id}
