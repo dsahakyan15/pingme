@@ -46,6 +46,9 @@ db.serialize(() => {
     FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE
   )`);
+  db.run('DELETE FROM users');
+  db.run('DELETE FROM conversations');
+  db.run('DELETE FROM conversation_participants');
   db.run('DELETE FROM messages');
 });
 
