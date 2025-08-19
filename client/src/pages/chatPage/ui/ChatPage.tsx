@@ -4,19 +4,20 @@ import ClientInputForm from '../../../components/ClientInputForm';
 import { useWebSocketRTK } from '../../../hooks/useWebSocketRTK';
 import UserLoginForm from '../../../components/UserLoginForm';
 import Header from './components/Header';
+import { UsersBar } from './components/UsersBar';
 import ChatMessage from '../../../components/chat/ChatMessage';
 import type { Message } from '../../../types/types';
-import { useAppSelector } from '../../../app/hooks';
+// import { useAppSelector } from '../../../app/hooks';
 
 const ChatPage: React.FC = () => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
-  const { isConnected, chatMessages, sendMessage, error, connect, currentUser } = useWebSocketRTK();
-  const usersMap = useAppSelector((s) => (s.websocket.userMap ?? {}));
+  const { isConnected, chatMessages, sendMessage, error, usersMap, connect, currentUser } = useWebSocketRTK();
 
   useEffect(() => {
     connect('ws://localhost:3000');
   }, [connect]);
 
+  console.log(usersMap);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [sender, setSender] = useState<string>('');
 
@@ -41,27 +42,36 @@ const ChatPage: React.FC = () => {
       ) : (
         <>
           <Header isConnected={isConnected} connectionError={error || undefined} />
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="max-w-4xl mx-auto space-y-4">
-              {chatMessages.map((msg: Message, index) => {
-                const isCurrentUser = currentUser ? msg.sender_id === currentUser.id : false;
-                const senderName = usersMap[msg.sender_id]?.username;
-                return (
-                  <div
-                    key={msg.message_id}
-                    className={`flex animate-in fade-in slide-in-from-bottom-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <ChatMessage msg={msg} isCurrentUser={isCurrentUser} senderId={msg.sender_id} senderName={senderName} />
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
 
-          <ClientInputForm onSendMessage={sendMessage} user_id={currentUser?.id} isConnected={isConnected} />
-        </>
+          <div className="flex flex-1 flex-row">
+            <div className='w-1/5 bg-white border-r border-gray-200'>
+              <UsersBar />
+            </div>
+            <div className='w-4/5 flex flex-col bg-white border-l border-gray-200 relative'>
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="max-w-4xl mx-auto space-y-4">
+                  {chatMessages.map((msg: Message, index) => {
+                    const isCurrentUser = currentUser ? msg.sender_id === currentUser.id : false;
+                    const senderName = usersMap[msg.sender_id]?.username;
+                    return (
+                      <div
+                        key={msg.message_id}
+                        className={`flex animate-in fade-in slide-in-from-bottom-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <ChatMessage msg={msg} isCurrentUser={isCurrentUser} senderId={msg.sender_id} senderName={senderName} />
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+
+              <ClientInputForm onSendMessage={sendMessage} user_id={currentUser?.id} isConnected={isConnected} />
+
+
+            </div>
+          </div> </>
       )}
     </div>
   );

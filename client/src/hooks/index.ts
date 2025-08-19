@@ -6,4 +6,3 @@ export type { QueryHistoryItem } from './ai';
 
 // WebSocket Hooks
 export { useWebSocketRTK } from './useWebSocketRTK';
-export { useWebSocket } from './useWebSocket';

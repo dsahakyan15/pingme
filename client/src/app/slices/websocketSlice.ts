@@ -9,23 +9,23 @@ import type {
 } from '../../types/WebSocketTypes';
 import type { User } from '../../types/types';
 
-const STORAGE_KEY = 'chat.currentUser';
-const loadPersistedUser = (): User | null => {
-  try {
-    if (typeof window === 'undefined') return null;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.id === 'number' && typeof parsed.username === 'string') {
-      return { type: 'user', id: parsed.id, username: parsed.username } as User;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
+// const STORAGE_KEY = 'chat.currentUser';
+// const loadPersistedUser = (): User | null => {
+//   try {
+//     if (typeof window === 'undefined') return null;
+//     const raw = localStorage.getItem(STORAGE_KEY);
+//     if (!raw) return null;
+//     const parsed = JSON.parse(raw);
+//     if (parsed && typeof parsed.id === 'number' && typeof parsed.username === 'string') {
+//       return { type: 'user', id: parsed.id, username: parsed.username } as User;
+//     }
+//     return null;
+//   } catch {
+//     return null;
+//   }
+// };
 
-const persistedUser = loadPersistedUser();
+// const persistedUser = loadPersistedUser();
 const initialState: WebSocketState = {
   connectionStatus: 'disconnected',
   messages: [],
@@ -33,9 +33,9 @@ const initialState: WebSocketState = {
   error: null,
   isReconnecting: false,
   reconnectAttempts: 0,
-  currentUser: persistedUser,
+  currentUser: null,
   pendingUsername: undefined,
-  userMap: persistedUser ? { [persistedUser.id]: persistedUser } : {},
+  userMap: {},
 };
 
 const websocketSlice = createSlice({
@@ -82,11 +82,6 @@ const websocketSlice = createSlice({
         if (state.pendingUsername && userData.username === state.pendingUsername) {
             state.currentUser = userData;
             state.pendingUsername = undefined;
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: userData.id, username: userData.username }));
-            } catch {
-              // ignore storage errors
-            }
         }
       }
       state.messages.push(stored);
@@ -135,11 +130,6 @@ const websocketSlice = createSlice({
       state.currentUser = u;
       if (!state.userMap) state.userMap = {};
       state.userMap[u.id] = u;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: u.id, username: u.username }));
-      } catch {
-        // ignore storage errors
-      }
     },
   },
 });
