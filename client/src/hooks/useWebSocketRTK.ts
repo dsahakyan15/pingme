@@ -12,6 +12,7 @@ import {
   selectLatestMessage,
   selectChatMessages,
   selectCurrentUser,
+  selectUsersMap,
 } from '../app/selectors/websocketSelectors';
 import type { ConnectPayload, SendMessagePayload } from '../types/WebSocketTypes';
 import type { OutgoingEventType, EventPayloadMap } from '../types/types';
@@ -25,6 +26,7 @@ export const useWebSocketRTK = () => {
   const isConnecting = useSelector(selectIsConnecting);
   const rawMessages = useSelector(selectWebSocketMessages);
   const chatMessages = useSelector(selectChatMessages);
+  const usersMap = useSelector(selectUsersMap);
   const error = useSelector(selectWebSocketError);
   const isReconnecting = useSelector(selectIsReconnecting);
   const reconnectAttempts = useSelector(selectReconnectAttempts);
@@ -69,6 +71,7 @@ export const useWebSocketRTK = () => {
     isConnecting,
     messages: rawMessages,
     chatMessages,
+    usersMap,
     error,
     isReconnecting,
     reconnectAttempts,
