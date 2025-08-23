@@ -2,7 +2,15 @@
 
 export type WebSocketConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
-import type { Message, User, SystemMessage, IncomingPayload, OutgoingEventType, EventPayloadMap, SendMessagePayload as BaseSendMessagePayload } from './types';
+import type {
+  Message,
+  User,
+  SystemMessage,
+  IncomingPayload,
+  OutgoingEventType,
+  EventPayloadMap,
+  SendMessagePayload as BaseSendMessagePayload,
+} from './types';
 
 export interface IncomingEnvelope<T extends IncomingPayload = IncomingPayload> {
   type: T['type'];
@@ -13,7 +21,10 @@ export interface IncomingEnvelope<T extends IncomingPayload = IncomingPayload> {
 
 export type WebSocketStoredMessage =
   | ({ kind: 'incoming' } & IncomingEnvelope)
-  | ({ kind: 'outgoing'; optimistic?: boolean } & BaseSendMessagePayload<OutgoingEventType> & { id: string; timestamp: number });
+  | ({ kind: 'outgoing'; optimistic?: boolean } & BaseSendMessagePayload<OutgoingEventType> & {
+        id: string;
+        timestamp: number;
+      });
 
 export interface WebSocketState {
   connectionStatus: WebSocketConnectionStatus;
@@ -25,6 +36,9 @@ export interface WebSocketState {
   currentUser: User | null;
   pendingUsername?: string; // username awaiting server ack
   userMap?: Record<number, User>; // map of known users
+  isLoadingHistory?: boolean; // indicator for loading history
+  conversations: Record<number, import('./ConversationTypes').AnyConversation>;
+  activeConversationId: number | null;
 }
 
 export interface ConnectPayload {

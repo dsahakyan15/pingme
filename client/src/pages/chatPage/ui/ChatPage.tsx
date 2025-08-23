@@ -6,20 +6,73 @@ import UserLoginForm from '../../../components/UserLoginForm';
 import Header from './components/Header';
 import { UsersBar } from './components/UsersBar';
 import ChatMessage from '../../../components/chat/ChatMessage';
-import type { Message } from '../../../types/types';
+import { ChatHeader } from '../../../components/ChatHeader';
+import { EmptyChatState } from '../../../components/EmptyChatState';
+import type { Message, User } from '../../../types/types';
+import { demoConversations, demoUsers } from '../../../utils/demoData';
 // import { useAppSelector } from '../../../app/hooks';
 
 const ChatPage: React.FC = () => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
-  const { isConnected, chatMessages, sendMessage, error, usersMap, connect, currentUser } = useWebSocketRTK();
+  const {
+    isConnected,
+    chatMessages,
+    conversationMessages,
+    conversations,
+    activeConversationId,
+    activeConversation,
+    sendMessage,
+    error,
+    usersMap,
+    connect,
+    currentUser,
+    isLoadingHistory,
+    requestHistory,
+    setActiveConversation,
+    createPrivateConversation,
+    loadDemoData,
+  } = useWebSocketRTK();
 
   useEffect(() => {
     connect('ws://localhost:3000');
-  }, [connect]);
+    // Load demo data for better presentation
+    loadDemoData(demoConversations, demoUsers);
+  }, [connect, loadDemoData]);
+
+  // Create demo private conversations when users are available
+  useEffect(() => {
+    if (currentUser && Object.keys(usersMap || {}).length > 1) {
+      // Create demo conversations with other users for demonstration
+      const otherUsers = Object.values(usersMap || {}).filter((user) => user.id !== currentUser.id);
+      otherUsers.slice(0, 2).forEach((user) => {
+        // Check if conversation already exists before creating
+        const existingConv = conversations.find(
+          (conv) =>
+            conv.type === 'private' &&
+            conv.participants.includes(user.id) &&
+            conv.participants.includes(currentUser.id)
+        );
+        if (!existingConv) {
+          createPrivateConversation(user);
+        }
+      });
+    }
+  }, [currentUser, usersMap, conversations, createPrivateConversation]);
 
   console.log(usersMap);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [sender, setSender] = useState<string>('');
+
+  const handleConversationSelect = (conversationId: number) => {
+    setActiveConversation(conversationId);
+  };
+
+  const handleUserSelect = (user: User) => {
+    createPrivateConversation(user);
+  };
+
+  // Get messages for the active conversation
+  const displayMessages = activeConversationId ? conversationMessages : chatMessages; // Fallback to all messages if no active conversation
 
   useEffect(() => {
     if (sender) {
@@ -33,7 +86,7 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatMessages]);
+  }, [displayMessages]);
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
@@ -42,24 +95,59 @@ const ChatPage: React.FC = () => {
       ) : (
         <>
           <Header isConnected={isConnected} connectionError={error || undefined} />
-
           <div className="flex flex-1 flex-row">
-            <div className='w-1/5 bg-white border-r border-gray-200'>
-              <UsersBar />
+            <div className="w-1/5 bg-white border-r border-gray-200">
+              <UsersBar
+                conversations={conversations}
+                activeConversationId={activeConversationId}
+                onConversationSelect={handleConversationSelect}
+                onUserSelect={handleUserSelect}
+              />
             </div>
-            <div className='w-4/5 flex flex-col bg-white border-l border-gray-200 relative'>
+            <div className="w-4/5 flex flex-col bg-white border-l border-gray-200 relative">
+              <ChatHeader
+                activeConversation={activeConversation}
+                usersMap={usersMap || {}}
+                currentUserId={currentUser?.id}
+                isConnected={isConnected}
+                onlineUsersCount={Object.keys(usersMap || {}).length}
+              />
+
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="max-w-4xl mx-auto space-y-4">
-                  {chatMessages.map((msg: Message, index) => {
+                  {isLoadingHistory && (
+                    <div className="flex justify-center py-4">
+                      <div className="flex items-center space-x-2 text-blue-600">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span>Загружается история сообщений...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {!isLoadingHistory && displayMessages.length === 0 && (
+                    <EmptyChatState
+                      onRequestHistory={requestHistory}
+                      conversationName={activeConversation?.name}
+                    />
+                  )}
+
+                  {displayMessages.map((msg: Message, index) => {
                     const isCurrentUser = currentUser ? msg.sender_id === currentUser.id : false;
-                    const senderName = usersMap[msg.sender_id]?.username;
+                    const senderName = usersMap && usersMap[msg.sender_id]?.username;
                     return (
                       <div
                         key={msg.message_id}
-                        className={`flex animate-in fade-in slide-in-from-bottom-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
-                        style={{ animationDelay: `${index * 100}ms` }}
+                        className={`flex message-enter ${
+                          isCurrentUser ? 'justify-end' : 'justify-start'
+                        }`}
+                        style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <ChatMessage msg={msg} isCurrentUser={isCurrentUser} senderId={msg.sender_id} senderName={senderName} />
+                        <ChatMessage
+                          msg={msg}
+                          isCurrentUser={isCurrentUser}
+                          senderId={msg.sender_id}
+                          senderName={senderName}
+                        />
                       </div>
                     );
                   })}
@@ -67,11 +155,15 @@ const ChatPage: React.FC = () => {
                 </div>
               </div>
 
-              <ClientInputForm onSendMessage={sendMessage} user_id={currentUser?.id} isConnected={isConnected} />
-
-
+              <ClientInputForm
+                onSendMessage={sendMessage}
+                user_id={currentUser?.id}
+                isConnected={isConnected}
+                conversationId={activeConversationId || 1}
+              />
             </div>
-          </div> </>
+          </div>{' '}
+        </>
       )}
     </div>
   );

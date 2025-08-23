@@ -95,6 +95,40 @@ wss.on('connection', (ws) => {
     try {
       // Парсим JSON из входящих данных
       const msg = JSON.parse(data);
+
+      // Обработка запроса истории сообщений
+      if (msg.type === 'history.request') {
+        // Получаем все сообщения и пользователей
+        db.all('SELECT * FROM messages ORDER BY sent_at ASC', [], (err, messages) => {
+          if (err) {
+            console.error('Ошибка получения истории сообщений:', err);
+            return;
+          }
+
+          db.all('SELECT * FROM users', [], (userErr, users) => {
+            if (userErr) {
+              console.error('Ошибка получения пользователей:', err);
+              return;
+            }
+
+            // Отправляем историю клиенту
+            const historyResponse = {
+              type: 'history.response',
+              data: {
+                messages: messages.map((msg) => ({
+                  ...msg,
+                  text: msg.message_text, // добавляем поле text для совместимости
+                })),
+                users: users,
+              },
+            };
+
+            send(ws, historyResponse);
+          });
+        });
+        return;
+      }
+
       // Поддержка нового протокола: { type: 'message.send', data: {...} }
       if (msg.type === 'message.send' && msg.data) {
         const { conversation_id = 1, sender_id, text } = msg.data;
@@ -128,21 +162,26 @@ wss.on('connection', (ws) => {
           if (err) {
             console.error('Ошибка сохранения пользователя (user.register):', err);
           }
-          db.get('SELECT user_id, username FROM users WHERE username = ?', [username], (selErr, row) => {
-            if (selErr) {
-              console.error('Ошибка выборки пользователя:', selErr);
-              return;
+          db.get(
+            'SELECT user_id, username FROM users WHERE username = ?',
+            [username],
+            (selErr, row) => {
+              if (selErr) {
+                console.error('Ошибка выборки пользователя:', selErr);
+                return;
+              }
+              if (!row) return;
+              const userEnvelope = {
+                type: 'user',
+                data: { type: 'user', id: row.user_id, username: row.username },
+              };
+              // Отправляем только инициатору регистрацию + можно вещать всем (решили вещать всем)
+              broadcast(userEnvelope);
             }
-            if (!row) return;
-            const userEnvelope = {
-              type: 'user',
-              data: { type: 'user', id: row.user_id, username: row.username },
-            };
-            // Отправляем только инициатору регистрацию + можно вещать всем (решили вещать всем)
-            broadcast(userEnvelope);
-          });
+          );
         });
-      } else if (msg.type === 'message') { // legacy формат: { type:'message', sender_id, text }
+      } else if (msg.type === 'message') {
+        // legacy формат: { type:'message', sender_id, text }
         const { conversation_id = 1, sender_id, text } = msg;
         if (!sender_id || !text) return;
         db.run(
@@ -167,25 +206,30 @@ wss.on('connection', (ws) => {
             broadcast(messageEnvelope);
           }
         );
-      } else if (msg.type === 'user') { // legacy user
+      } else if (msg.type === 'user') {
+        // legacy user
         const { username } = msg;
         if (!username) return;
         db.run('INSERT OR IGNORE INTO users (username) VALUES (?)', [username], (err) => {
           if (err) {
             console.error('Ошибка сохранения пользователя (legacy user):', err);
           }
-          db.get('SELECT user_id, username FROM users WHERE username = ?', [username], (selErr, row) => {
-            if (selErr) {
-              console.error('Ошибка выборки пользователя:', selErr);
-              return;
+          db.get(
+            'SELECT user_id, username FROM users WHERE username = ?',
+            [username],
+            (selErr, row) => {
+              if (selErr) {
+                console.error('Ошибка выборки пользователя:', selErr);
+                return;
+              }
+              if (!row) return;
+              const userEnvelope = {
+                type: 'user',
+                data: { type: 'user', id: row.user_id, username: row.username },
+              };
+              broadcast(userEnvelope);
             }
-            if (!row) return;
-            const userEnvelope = {
-              type: 'user',
-              data: { type: 'user', id: row.user_id, username: row.username },
-            };
-            broadcast(userEnvelope);
-          });
+          );
         });
       } else {
         // Неизвестный тип — можно логировать

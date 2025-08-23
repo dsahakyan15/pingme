@@ -1,6 +1,16 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { connect, disconnect, sendMessage, clearMessages } from '../app/slices/websocketSlice';
+import {
+  connect,
+  disconnect,
+  sendMessage,
+  clearMessages,
+  requestHistory,
+  setActiveConversation,
+  createPrivateConversation,
+  initializeGroupConversation,
+  loadDemoData,
+} from '../app/slices/websocketSlice';
 import {
   selectConnectionStatus,
   selectIsConnected,
@@ -13,6 +23,11 @@ import {
   selectChatMessages,
   selectCurrentUser,
   selectUsersMap,
+  selectIsLoadingHistory,
+  selectConversations,
+  selectActiveConversationId,
+  selectActiveConversation,
+  selectConversationMessages,
 } from '../app/selectors/websocketSelectors';
 import type { ConnectPayload, SendMessagePayload } from '../types/WebSocketTypes';
 import type { OutgoingEventType, EventPayloadMap } from '../types/types';
@@ -33,6 +48,11 @@ export const useWebSocketRTK = () => {
   const latestMessage = useSelector(selectLatestMessage);
   const currentUser = useSelector(selectCurrentUser);
   const currentUrl = useSelector((s: RootState) => s.websocket.url);
+  const isLoadingHistory = useSelector(selectIsLoadingHistory);
+  const conversations = useSelector(selectConversations);
+  const activeConversationId = useSelector(selectActiveConversationId);
+  const activeConversation = useSelector(selectActiveConversation);
+  const conversationMessages = useSelector(selectConversationMessages);
 
   const handleConnect = useCallback(
     (url: string, protocols?: string | string[]) => {
@@ -47,8 +67,16 @@ export const useWebSocketRTK = () => {
   }, [dispatch]);
 
   const handleSendMessage = useCallback(
-    <T extends OutgoingEventType>(type: T, data: EventPayloadMap[T], options?: { optimisticId?: string }) => {
-      const payload: SendMessagePayload<T> = { type, data, meta: { optimisticId: options?.optimisticId } };
+    <T extends OutgoingEventType>(
+      type: T,
+      data: EventPayloadMap[T],
+      options?: { optimisticId?: string }
+    ) => {
+      const payload: SendMessagePayload<T> = {
+        type,
+        data,
+        meta: { optimisticId: options?.optimisticId },
+      };
       dispatch(sendMessage(payload));
     },
     [dispatch]
@@ -65,12 +93,52 @@ export const useWebSocketRTK = () => {
     dispatch(connect({ url: currentUrl }));
   }, [currentUrl, isConnecting, connectionStatus, dispatch]);
 
+  const handleRequestHistory = useCallback(() => {
+    dispatch(requestHistory());
+  }, [dispatch]);
+
+  const handleSetActiveConversation = useCallback(
+    (conversationId: number) => {
+      dispatch(setActiveConversation(conversationId));
+    },
+    [dispatch]
+  );
+
+  const handleCreatePrivateConversation = useCallback(
+    (otherUser: import('../types/types').User) => {
+      dispatch(createPrivateConversation({ otherUserId: otherUser.id, otherUser }));
+    },
+    [dispatch]
+  );
+
+  const handleInitializeGroupConversation = useCallback(
+    (conversationId: number) => {
+      dispatch(initializeGroupConversation({ conversationId }));
+    },
+    [dispatch]
+  );
+
+  const handleLoadDemoData = useCallback(
+    (
+      demoConversations: import('../types/ConversationTypes').AnyConversation[],
+      demoUsers: import('../types/types').User[]
+    ) => {
+      dispatch(loadDemoData({ conversations: demoConversations, users: demoUsers }));
+    },
+    [dispatch]
+  );
+
   return {
     connectionStatus,
     isConnected,
     isConnecting,
+    isLoadingHistory,
     messages: rawMessages,
     chatMessages,
+    conversationMessages,
+    conversations,
+    activeConversationId,
+    activeConversation,
     usersMap,
     error,
     isReconnecting,
@@ -81,6 +149,11 @@ export const useWebSocketRTK = () => {
     connect: handleConnect,
     disconnect: handleDisconnect,
     reconnect: handleReconnect,
+    requestHistory: handleRequestHistory,
+    setActiveConversation: handleSetActiveConversation,
+    createPrivateConversation: handleCreatePrivateConversation,
+    initializeGroupConversation: handleInitializeGroupConversation,
+    loadDemoData: handleLoadDemoData,
     sendMessage: handleSendMessage,
     clearMessages: handleClearMessages,
   };

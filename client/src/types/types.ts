@@ -20,7 +20,13 @@ export interface SystemMessage {
   timestamp: string;
 }
 
-export type IncomingPayload = Message | User | SystemMessage;
+export interface HistoryResponse {
+  type: 'history.response';
+  messages: Message[];
+  users: User[];
+}
+
+export type IncomingPayload = Message | User | SystemMessage | HistoryResponse;
 
 export interface ServerEnvelope<T extends { type: string } = IncomingPayload> {
   type: T['type'];
@@ -41,6 +47,7 @@ export interface EventPayloadMap {
     conversation_id: number;
     sender_id: number;
   };
+  'history.request': Record<string, never>;
 }
 export type OutgoingEventType = keyof EventPayloadMap;
 

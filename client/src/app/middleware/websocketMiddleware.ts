@@ -9,12 +9,34 @@ import {
   disconnect,
   startReconnecting,
   stopReconnecting,
+  requestHistory,
+  historyReceived,
 } from '../slices/websocketSlice';
-import type { SendMessagePayload, IncomingEnvelope } from '../../types/WebSocketTypes';
+import type {
+  SendMessagePayload,
+  IncomingEnvelope,
+  WebSocketStoredMessage,
+} from '../../types/WebSocketTypes';
 import type { RootState } from '../store';
+import type { User } from '../../types/types';
+
+interface HistoryMessage {
+  message_id: number;
+  conversation_id: number;
+  sender_id: number;
+  text?: string;
+  message_text?: string;
+  sent_at: string;
+}
+
+interface HistoryUser {
+  user_id?: number;
+  id?: number;
+  username: string;
+}
 
 let websocket: WebSocket | null = null;
-let reconnectTimeout: number | null = null;
+let reconnectTimeout: NodeJS.Timeout | null = null;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 3000;
 
@@ -42,6 +64,8 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
 
       websocket.onopen = () => {
         store.dispatch(connected());
+        // Автоматически запрашиваем историю сообщений при подключении
+        store.dispatch(requestHistory());
       };
 
       websocket.onclose = (event) => {
@@ -64,6 +88,46 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
       websocket.onmessage = (event) => {
         try {
           const raw = JSON.parse(event.data);
+
+          // Обрабатываем ответ с историей сообщений
+          if (raw.type === 'history.response' && raw.data) {
+            const { messages = [], users = [] } = raw.data;
+
+            // Преобразуем сообщения в формат WebSocketStoredMessage
+            const formattedMessages: WebSocketStoredMessage[] = messages.map(
+              (msg: HistoryMessage) => ({
+                kind: 'incoming' as const,
+                type: 'message',
+                data: {
+                  type: 'message',
+                  message_id: msg.message_id,
+                  conversation_id: msg.conversation_id,
+                  sender_id: msg.sender_id,
+                  text: msg.text || msg.message_text,
+                  sent_at: msg.sent_at,
+                },
+                id: `msg-${msg.message_id}`,
+                timestamp: new Date(msg.sent_at).getTime(),
+              })
+            );
+
+            // Преобразуем пользователей в правильный формат
+            const formattedUsers: User[] = users.map((user: HistoryUser) => ({
+              type: 'user',
+              id: user.user_id || user.id!,
+              username: user.username,
+            }));
+
+            store.dispatch(
+              historyReceived({
+                messages: formattedMessages,
+                users: formattedUsers,
+              })
+            );
+            return;
+          }
+
+          // Обычная обработка входящих сообщений
           const envelope: IncomingEnvelope = {
             type: raw.type,
             data: raw.data,
@@ -93,6 +157,21 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
     } catch (error) {
       console.error('Failed to send WebSocket message:', error);
       store.dispatch(connectionError('Failed to send message'));
+    }
+  }
+
+  if (requestHistory.match(action) && websocket?.readyState === WebSocket.OPEN) {
+    try {
+      // Отправляем запрос на получение истории сообщений
+      const historyRequest = {
+        type: 'history.request',
+        data: {},
+        timestamp: Date.now(),
+      };
+      websocket.send(JSON.stringify(historyRequest));
+    } catch (error) {
+      console.error('Failed to request message history:', error);
+      store.dispatch(connectionError('Failed to request message history'));
     }
   }
 
