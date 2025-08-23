@@ -78,7 +78,7 @@ export const UsersBar: React.FC<UsersBarProps> = ({
             users={users}
             currentUserId={currentUser?.id}
             onUserSelect={onUserSelect}
-            onlineUsers={new Set(users.map((u) => u.id))} // Для демонстрации - все онлайн
+            onlineUsers={new Set(users.map((u) => u.id))} // All users shown as online
           />
         )}
       </div>

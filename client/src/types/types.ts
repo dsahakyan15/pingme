@@ -26,7 +26,19 @@ export interface HistoryResponse {
   users: User[];
 }
 
-export type IncomingPayload = Message | User | SystemMessage | HistoryResponse;
+export interface ConversationCreatedPayload {
+  type: 'conversation.created';
+  conversation_id: number;
+  participants: number[];
+  is_direct_message: boolean;
+}
+
+export type IncomingPayload =
+  | Message
+  | User
+  | SystemMessage
+  | HistoryResponse
+  | ConversationCreatedPayload;
 
 export interface ServerEnvelope<T extends { type: string } = IncomingPayload> {
   type: T['type'];
@@ -46,6 +58,10 @@ export interface EventPayloadMap {
   'user.typing': {
     conversation_id: number;
     sender_id: number;
+  };
+  'conversation.create': {
+    user1_id: number;
+    user2_id: number;
   };
   'history.request': Record<string, never>;
 }

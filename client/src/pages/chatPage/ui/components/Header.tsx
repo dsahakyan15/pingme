@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { UserIcon } from '../../../../widgets/simpleIcons'
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -12,17 +11,10 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
   isConnected,
-  connectionError,
   onReconnect,
   isConnecting = false,
   isReconnecting = false,
 }) => {
-  const { statusText, statusColorClass } = useMemo(() => {
-    if (isConnected) return { statusText: 'в сети', statusColorClass: 'text-green-600' };
-    if (isConnecting || isReconnecting) return { statusText: 'переподключение...', statusColorClass: 'text-amber-500' };
-    return { statusText: 'не в сети', statusColorClass: 'text-red-500' };
-  }, [isConnected, isConnecting, isReconnecting]);
-
   const canReconnect = !isConnected && onReconnect && !(isConnecting || isReconnecting);
   const reconnectDisabled = !isConnected && !!onReconnect && (isConnecting || isReconnecting);
 
@@ -31,62 +23,61 @@ const Header: React.FC<HeaderProps> = ({
     onReconnect();
   };
 
-  const presenceDotClass = isConnected ? 'bg-green-500' : (isConnecting || isReconnecting) ? 'bg-amber-400' : 'bg-red-400';
+  const handleReconnectKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleReconnectClick();
+    }
+  };
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 p-4 animate-in fade-in slide-in-from-top-5" role="banner">
-      <div className="flex items-center justify-between max-w-4xl mx-auto">
-        {/* Left: Identity + Status */}
-        <div className="flex items-center space-x-4">
-          <div className="relative" aria-label={isConnected ? 'User online' : 'User offline'}>
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg" role="img" aria-label="User avatar">
-              <UserIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${presenceDotClass} border-2 border-white rounded-full`} aria-hidden="true" />
-          </div>
-          <div className="select-none">
-            <h1 className="text-xl font-semibold text-slate-800 tracking-tight">Group Chat</h1>
-            <p className={`text-sm ${statusColorClass}`} aria-live="polite">{statusText}</p>
-            {connectionError && (
-              <p className="text-xs text-red-500" role="alert">{connectionError}</p>
-            )}
-          </div>
+    <header
+      className="bg-white/80 backdrop-blur-sm border-b border-slate-200 p-4 animate-in fade-in slide-in-from-top-5"
+      role="banner"
+    >
+      <div className="flex items-center justify-between max-w-6xl mx-auto">
+        {/* Left: Logo + Status */}
+        <div className="flex items-center space-x-3">
+          <h1 className="text-xl font-semibold text-slate-800">PingMe</h1>
         </div>
 
-        {/* Right: Controls */}
-        <div className="flex items-center space-x-3">
+        {/* Right: Navigation */}
+        <nav className="flex items-center space-x-3">
           {!isConnected && onReconnect && (
             <button
               type="button"
               onClick={handleReconnectClick}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleReconnectClick(); }}
+              onKeyDown={handleReconnectKeyDown}
               tabIndex={0}
-              aria-label="Переподключить"
+              aria-label="Переподключить к серверу"
               disabled={reconnectDisabled}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${reconnectDisabled ? 'bg-red-100 text-red-400' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                reconnectDisabled
+                  ? 'bg-red-100 text-red-400'
+                  : 'bg-red-100 hover:bg-red-200 text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+              }`}
             >
-              {(isConnecting || isReconnecting) ? '⏳ Переподключение' : '🔄 Переподключить'}
+              {isConnecting || isReconnecting ? '⏳ Переподключение' : '🔄 Переподключить'}
             </button>
           )}
           <Link
             to="/"
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200 text-sm font-medium"
-            aria-label="На главную"
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            aria-label="Перейти на главную страницу"
           >
             ← Главная
           </Link>
           <Link
             to="/ai"
-            className="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors duration-200 text-sm font-medium"
-            aria-label="AI страница"
+            className="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors duration-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="Перейти на AI страницу"
           >
             🤖 AI
           </Link>
-         
-        </div>
+        </nav>
       </div>
     </header>
   );
 };
 
-export default Header
+export default Header;

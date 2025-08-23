@@ -9,7 +9,6 @@ import ChatMessage from '../../../components/chat/ChatMessage';
 import { ChatHeader } from '../../../components/ChatHeader';
 import { EmptyChatState } from '../../../components/EmptyChatState';
 import type { Message, User } from '../../../types/types';
-import { demoConversations, demoUsers } from '../../../utils/demoData';
 // import { useAppSelector } from '../../../app/hooks';
 
 const ChatPage: React.FC = () => {
@@ -30,34 +29,11 @@ const ChatPage: React.FC = () => {
     requestHistory,
     setActiveConversation,
     createPrivateConversation,
-    loadDemoData,
   } = useWebSocketRTK();
 
   useEffect(() => {
     connect('ws://localhost:3000');
-    // Load demo data for better presentation
-    loadDemoData(demoConversations, demoUsers);
-  }, [connect, loadDemoData]);
-
-  // Create demo private conversations when users are available
-  useEffect(() => {
-    if (currentUser && Object.keys(usersMap || {}).length > 1) {
-      // Create demo conversations with other users for demonstration
-      const otherUsers = Object.values(usersMap || {}).filter((user) => user.id !== currentUser.id);
-      otherUsers.slice(0, 2).forEach((user) => {
-        // Check if conversation already exists before creating
-        const existingConv = conversations.find(
-          (conv) =>
-            conv.type === 'private' &&
-            conv.participants.includes(user.id) &&
-            conv.participants.includes(currentUser.id)
-        );
-        if (!existingConv) {
-          createPrivateConversation(user);
-        }
-      });
-    }
-  }, [currentUser, usersMap, conversations, createPrivateConversation]);
+  }, [connect]);
 
   console.log(usersMap);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

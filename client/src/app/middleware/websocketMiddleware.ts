@@ -11,6 +11,7 @@ import {
   stopReconnecting,
   requestHistory,
   historyReceived,
+  requestPrivateConversation,
 } from '../slices/websocketSlice';
 import type {
   SendMessagePayload,
@@ -172,6 +173,32 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
     } catch (error) {
       console.error('Failed to request message history:', error);
       store.dispatch(connectionError('Failed to request message history'));
+    }
+  }
+
+  if (requestPrivateConversation.match(action) && websocket?.readyState === WebSocket.OPEN) {
+    try {
+      const otherUserId = action.payload.otherUserId;
+      const currentUserId = state.currentUser?.id;
+
+      if (!currentUserId) {
+        console.error('Cannot create private conversation: no current user');
+        return result;
+      }
+
+      // Отправляем запрос на создание приватного чата
+      const conversationRequest = {
+        type: 'conversation.create',
+        data: {
+          user1_id: currentUserId,
+          user2_id: otherUserId,
+        },
+        timestamp: Date.now(),
+      };
+      websocket.send(JSON.stringify(conversationRequest));
+    } catch (error) {
+      console.error('Failed to request private conversation:', error);
+      store.dispatch(connectionError('Failed to create private conversation'));
     }
   }
 

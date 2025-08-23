@@ -8,8 +8,8 @@ import {
   requestHistory,
   setActiveConversation,
   createPrivateConversation,
+  requestPrivateConversation,
   initializeGroupConversation,
-  loadDemoData,
 } from '../app/slices/websocketSlice';
 import {
   selectConnectionStatus,
@@ -106,24 +106,27 @@ export const useWebSocketRTK = () => {
 
   const handleCreatePrivateConversation = useCallback(
     (otherUser: import('../types/types').User) => {
+      // Сначала проверяем, существует ли уже чат
       dispatch(createPrivateConversation({ otherUserId: otherUser.id, otherUser }));
+
+      // Если чат не найден, отправляем запрос на сервер
+      const existingConv = Object.values(conversations).find(
+        (conv) =>
+          conv.type === 'private' &&
+          conv.participants.includes(otherUser.id) &&
+          conv.participants.includes(currentUser?.id || 0)
+      );
+
+      if (!existingConv) {
+        dispatch(requestPrivateConversation(otherUser.id));
+      }
     },
-    [dispatch]
+    [dispatch, conversations, currentUser]
   );
 
   const handleInitializeGroupConversation = useCallback(
     (conversationId: number) => {
       dispatch(initializeGroupConversation({ conversationId }));
-    },
-    [dispatch]
-  );
-
-  const handleLoadDemoData = useCallback(
-    (
-      demoConversations: import('../types/ConversationTypes').AnyConversation[],
-      demoUsers: import('../types/types').User[]
-    ) => {
-      dispatch(loadDemoData({ conversations: demoConversations, users: demoUsers }));
     },
     [dispatch]
   );
@@ -153,7 +156,6 @@ export const useWebSocketRTK = () => {
     setActiveConversation: handleSetActiveConversation,
     createPrivateConversation: handleCreatePrivateConversation,
     initializeGroupConversation: handleInitializeGroupConversation,
-    loadDemoData: handleLoadDemoData,
     sendMessage: handleSendMessage,
     clearMessages: handleClearMessages,
   };

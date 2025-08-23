@@ -50,6 +50,15 @@ db.serialize(() => {
   db.run('DELETE FROM conversations');
   db.run('DELETE FROM conversation_participants');
   db.run('DELETE FROM messages');
+
+  // Создаем общий групповой чат (conversation_id = 1)
+  db.run(`INSERT INTO conversations (conversation_id, is_direct_message) VALUES (1, 0)`, (err) => {
+    if (err) {
+      console.error('Ошибка создания группового чата:', err);
+    } else {
+      console.log('Групповой чат создан с ID 1');
+    }
+  });
 });
 
 // REST-эндпоинт для получения истории сообщений (через HTTP-запрос)
@@ -70,6 +79,79 @@ app.get('/messages', (req, res) => {
     res.json(formattedRows);
   });
 });
+
+function createPrivateConversation(user1Id, user2Id, callback) {
+  // Проверяем, не существует ли уже приватный чат между этими пользователями
+  db.get(
+    `
+    SELECT c.conversation_id 
+    FROM conversations c
+    JOIN conversation_participants cp1 ON c.conversation_id = cp1.conversation_id
+    JOIN conversation_participants cp2 ON c.conversation_id = cp2.conversation_id
+    WHERE c.is_direct_message = 1 
+    AND cp1.user_id = ? 
+    AND cp2.user_id = ?
+  `,
+    [user1Id, user2Id],
+    (err, row) => {
+      if (err) {
+        return callback(err, null);
+      }
+
+      if (row) {
+        // Чат уже существует
+        return callback(null, row.conversation_id);
+      }
+
+      // Создаем новый приватный чат
+      db.run(`INSERT INTO conversations (is_direct_message) VALUES (1)`, function (err) {
+        if (err) {
+          return callback(err, null);
+        }
+
+        const conversationId = this.lastID;
+
+        // Добавляем участников
+        db.run(
+          `INSERT INTO conversation_participants (conversation_id, user_id) VALUES (?, ?)`,
+          [conversationId, user1Id],
+          (err) => {
+            if (err) {
+              return callback(err, null);
+            }
+
+            db.run(
+              `INSERT INTO conversation_participants (conversation_id, user_id) VALUES (?, ?)`,
+              [conversationId, user2Id],
+              (err) => {
+                if (err) {
+                  return callback(err, null);
+                }
+
+                callback(null, conversationId);
+              }
+            );
+          }
+        );
+      });
+    }
+  );
+}
+
+function addUserToGroupChat(userId) {
+  // Добавляем пользователя в групповой чат (conversation_id = 1)
+  db.run(
+    `INSERT OR IGNORE INTO conversation_participants (conversation_id, user_id) VALUES (1, ?)`,
+    [userId],
+    (err) => {
+      if (err) {
+        console.error('Ошибка добавления пользователя в групповой чат:', err);
+      } else {
+        console.log(`Пользователь ${userId} добавлен в групповой чат`);
+      }
+    }
+  );
+}
 
 function broadcast(jsonObj) {
   const payload = JSON.stringify(jsonObj);
@@ -155,6 +237,33 @@ wss.on('connection', (ws) => {
             broadcast(messageEnvelope);
           }
         );
+      } else if (msg.type === 'conversation.create' && msg.data) {
+        const { user1_id, user2_id } = msg.data;
+        if (!user1_id || !user2_id) return;
+
+        createPrivateConversation(user1_id, user2_id, (err, conversationId) => {
+          if (err) {
+            console.error('Ошибка создания приватного чата:', err);
+            return;
+          }
+
+          // Отправляем информацию о созданном чате
+          const conversationEnvelope = {
+            type: 'conversation.created',
+            data: {
+              conversation_id: conversationId,
+              participants: [user1_id, user2_id],
+              is_direct_message: true,
+            },
+          };
+
+          // Отправляем только участникам чата
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(conversationEnvelope));
+            }
+          });
+        });
       } else if (msg.type === 'user.register' && msg.data) {
         const { username } = msg.data;
         if (!username) return;
@@ -171,6 +280,10 @@ wss.on('connection', (ws) => {
                 return;
               }
               if (!row) return;
+
+              // Добавляем пользователя в групповой чат
+              addUserToGroupChat(row.user_id);
+
               const userEnvelope = {
                 type: 'user',
                 data: { type: 'user', id: row.user_id, username: row.username },
@@ -223,6 +336,10 @@ wss.on('connection', (ws) => {
                 return;
               }
               if (!row) return;
+
+              // Добавляем пользователя в групповой чат
+              addUserToGroupChat(row.user_id);
+
               const userEnvelope = {
                 type: 'user',
                 data: { type: 'user', id: row.user_id, username: row.username },

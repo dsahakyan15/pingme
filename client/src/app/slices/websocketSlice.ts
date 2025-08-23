@@ -63,6 +63,23 @@ const websocketSlice = createSlice({
       state.error = null;
       state.isReconnecting = false;
       state.reconnectAttempts = 0;
+
+      // Автоматически инициализируем групповой чат при подключении
+      if (!state.conversations[1]) {
+        const groupConv: GroupConversation = {
+          id: 1,
+          type: 'group',
+          name: 'Общий чат',
+          participants: [],
+          description: 'Общий групповой чат для всех пользователей',
+        };
+        state.conversations[1] = groupConv;
+      }
+
+      // Устанавливаем групповой чат как активный по умолчанию
+      if (!state.activeConversationId) {
+        state.activeConversationId = 1;
+      }
     },
 
     requestHistory: (state) => {
@@ -112,10 +129,41 @@ const websocketSlice = createSlice({
         if (userData && typeof userData.id === 'number') {
           if (!state.userMap) state.userMap = {};
           state.userMap[userData.id] = userData;
+
+          // Добавляем пользователя в групповой чат
+          if (
+            state.conversations[1] &&
+            !state.conversations[1].participants.includes(userData.id)
+          ) {
+            state.conversations[1].participants.push(userData.id);
+          }
         }
         if (state.pendingUsername && userData.username === state.pendingUsername) {
           state.currentUser = userData;
           state.pendingUsername = undefined;
+        }
+      }
+
+      if (stored.type === 'conversation.created') {
+        const convData = (
+          stored as IncomingEnvelope<import('../../types/types').ConversationCreatedPayload>
+        ).data;
+        if (convData && convData.conversation_id && convData.is_direct_message) {
+          // Создаем приватную конверсацию
+          const otherUserId = convData.participants.find(
+            (id: number) => id !== state.currentUser?.id
+          );
+          if (otherUserId && state.userMap && state.userMap[otherUserId]) {
+            const otherUser = state.userMap[otherUserId];
+            const newConversation: PrivateConversation = {
+              id: convData.conversation_id,
+              type: 'private',
+              name: otherUser.username,
+              participants: convData.participants,
+              otherUserId,
+            };
+            state.conversations[convData.conversation_id] = newConversation;
+          }
         }
       }
 
@@ -194,7 +242,7 @@ const websocketSlice = createSlice({
       state,
       action: PayloadAction<{ otherUserId: number; otherUser: User }>
     ) => {
-      const { otherUserId, otherUser } = action.payload;
+      const { otherUserId } = action.payload;
       if (!state.currentUser) return;
 
       // Check if conversation already exists
@@ -210,17 +258,17 @@ const websocketSlice = createSlice({
         return;
       }
 
-      // Create new private conversation
-      const newConversation: PrivateConversation = {
-        id: Date.now(), // Simple ID generation
-        type: 'private',
-        name: otherUser.username,
-        participants: [state.currentUser.id, otherUserId],
-        otherUserId,
-      };
+      // Отправляем запрос на создание приватного чата на сервер
+      // Сервер создаст conversation_id и отправит обратно
+    },
 
-      state.conversations[newConversation.id] = newConversation;
-      state.activeConversationId = newConversation.id;
+    requestPrivateConversation: {
+      reducer: () => {
+        // Это действие будет обработано middleware для отправки запроса на сервер
+      },
+      prepare: (otherUserId: number) => ({
+        payload: { otherUserId },
+      }),
     },
 
     initializeGroupConversation: (state, action: PayloadAction<{ conversationId: number }>) => {
@@ -243,32 +291,6 @@ const websocketSlice = createSlice({
         state.activeConversationId = conversationId;
       }
     },
-
-    loadDemoData: (
-      state,
-      action: PayloadAction<{ conversations: AnyConversation[]; users: User[] }>
-    ) => {
-      const { conversations, users } = action.payload;
-
-      // Load demo conversations
-      conversations.forEach((conv) => {
-        state.conversations[conv.id] = conv;
-      });
-
-      // Load demo users
-      if (!state.userMap) state.userMap = {};
-      users.forEach((user) => {
-        state.userMap![user.id] = user;
-      });
-
-      // Set group chat as active if no active conversation
-      if (!state.activeConversationId) {
-        const groupConv = conversations.find((c) => c.type === 'group');
-        if (groupConv) {
-          state.activeConversationId = groupConv.id;
-        }
-      }
-    },
   },
 });
 
@@ -289,8 +311,8 @@ export const {
   setActiveConversation,
   addConversation,
   createPrivateConversation,
+  requestPrivateConversation,
   initializeGroupConversation,
-  loadDemoData,
 } = websocketSlice.actions;
 
 export default websocketSlice.reducer;
