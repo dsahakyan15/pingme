@@ -1,0 +1,177 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`chatSlice reducers > incomingMessageReceived > should add a generic message to the normalized state 1`] = `
+{
+  "currentUser": null,
+  "messages": {
+    "allIds": [
+      "mock-uuid-1234",
+    ],
+    "byId": {
+      "mock-uuid-1234": {
+        "data": {
+          "text": "hello",
+        },
+        "id": "mock-uuid-1234",
+        "kind": "incoming",
+        "timestamp": 1724772800000,
+        "type": "greeting",
+      },
+    },
+  },
+  "pendingUsername": undefined,
+  "userMap": {},
+}
+`;
+
+exports[`chatSlice reducers > incomingMessageReceived > should handle incoming user data and update userMap 1`] = `
+{
+  "currentUser": null,
+  "messages": {
+    "allIds": [
+      "server-id-1",
+    ],
+    "byId": {
+      "server-id-1": {
+        "data": {
+          "id": 1,
+          "type": "user",
+          "username": "testuser",
+        },
+        "id": "server-id-1",
+        "kind": "incoming",
+        "timestamp": 1724772800000,
+        "type": "user",
+      },
+    },
+  },
+  "pendingUsername": undefined,
+  "userMap": {
+    "1": {
+      "id": 1,
+      "type": "user",
+      "username": "testuser",
+    },
+  },
+}
+`;
+
+exports[`chatSlice reducers > incomingMessageReceived > should set currentUser if pendingUsername matches 1`] = `
+{
+  "currentUser": {
+    "id": 1,
+    "type": "user",
+    "username": "testuser",
+  },
+  "messages": {
+    "allIds": [
+      "mock-uuid-1234",
+    ],
+    "byId": {
+      "mock-uuid-1234": {
+        "data": {
+          "id": 1,
+          "type": "user",
+          "username": "testuser",
+        },
+        "id": "mock-uuid-1234",
+        "kind": "incoming",
+        "timestamp": 1724772800000,
+        "type": "user",
+      },
+    },
+  },
+  "pendingUsername": undefined,
+  "userMap": {
+    "1": {
+      "id": 1,
+      "type": "user",
+      "username": "testuser",
+    },
+  },
+}
+`;
+
+exports[`chatSlice reducers > sendMessage > should add an optimistic outgoing message to the normalized state 1`] = `
+{
+  "currentUser": null,
+  "messages": {
+    "allIds": [
+      "mock-uuid-1234",
+    ],
+    "byId": {
+      "mock-uuid-1234": {
+        "data": {
+          "text": "hello",
+        },
+        "id": "mock-uuid-1234",
+        "kind": "outgoing",
+        "optimistic": true,
+        "timestamp": 1724772800000,
+        "type": "message",
+      },
+    },
+  },
+  "pendingUsername": undefined,
+  "userMap": {},
+}
+`;
+
+exports[`chatSlice reducers > sendMessage > should set pendingUsername on user.register 1`] = `
+{
+  "currentUser": null,
+  "messages": {
+    "allIds": [
+      "mock-uuid-1234",
+    ],
+    "byId": {
+      "mock-uuid-1234": {
+        "data": {
+          "username": "newuser",
+        },
+        "id": "mock-uuid-1234",
+        "kind": "outgoing",
+        "optimistic": true,
+        "timestamp": 1724772800000,
+        "type": "user.register",
+      },
+    },
+  },
+  "pendingUsername": "newuser",
+  "userMap": {},
+}
+`;
+
+exports[`chatSlice reducers > should handle clearMessages 1`] = `
+{
+  "currentUser": null,
+  "messages": {
+    "allIds": [],
+    "byId": {},
+  },
+  "pendingUsername": undefined,
+  "userMap": {},
+}
+`;
+
+exports[`chatSlice reducers > should handle setCurrentUser 1`] = `
+{
+  "currentUser": {
+    "id": 123,
+    "type": "user",
+    "username": "jules",
+  },
+  "messages": {
+    "allIds": [],
+    "byId": {},
+  },
+  "pendingUsername": undefined,
+  "userMap": {
+    "123": {
+      "id": 123,
+      "type": "user",
+      "username": "jules",
+    },
+  },
+}
+`;

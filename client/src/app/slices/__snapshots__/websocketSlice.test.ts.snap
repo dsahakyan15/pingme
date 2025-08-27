@@ -1,0 +1,223 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`websocketSlice reducers > incomingMessageReceived > should add a generic message and generate id/timestamp 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "currentUser": null,
+  "error": null,
+  "isReconnecting": false,
+  "messages": [
+    {
+      "data": {
+        "text": "hello",
+      },
+      "id": "mock-uuid-1234",
+      "kind": "incoming",
+      "timestamp": 1724772800000,
+      "type": "greeting",
+    },
+  ],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {},
+}
+`;
+
+exports[`websocketSlice reducers > incomingMessageReceived > should handle incoming user data and update userMap 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "currentUser": null,
+  "error": null,
+  "isReconnecting": false,
+  "messages": [
+    {
+      "data": {
+        "id": 1,
+        "type": "user",
+        "username": "testuser",
+      },
+      "id": "server-id-1",
+      "kind": "incoming",
+      "timestamp": 1724772800000,
+      "type": "user",
+    },
+  ],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {
+    "1": {
+      "id": 1,
+      "type": "user",
+      "username": "testuser",
+    },
+  },
+}
+`;
+
+exports[`websocketSlice reducers > incomingMessageReceived > should set currentUser if pendingUsername matches 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "currentUser": {
+    "id": 1,
+    "type": "user",
+    "username": "testuser",
+  },
+  "error": null,
+  "isReconnecting": false,
+  "messages": [
+    {
+      "data": {
+        "id": 1,
+        "type": "user",
+        "username": "testuser",
+      },
+      "id": "server-id-2",
+      "kind": "incoming",
+      "timestamp": 1724772800000,
+      "type": "user",
+    },
+  ],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {
+    "1": {
+      "id": 1,
+      "type": "user",
+      "username": "testuser",
+    },
+  },
+}
+`;
+
+exports[`websocketSlice reducers > sendMessage > should add an optimistic outgoing message 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "currentUser": null,
+  "error": null,
+  "isReconnecting": false,
+  "messages": [
+    {
+      "data": {
+        "text": "hello",
+      },
+      "id": "mock-uuid-1234",
+      "kind": "outgoing",
+      "optimistic": true,
+      "timestamp": 1724772800000,
+      "type": "message",
+    },
+  ],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {},
+}
+`;
+
+exports[`websocketSlice reducers > sendMessage > should set pendingUsername on user.register 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "currentUser": null,
+  "error": null,
+  "isReconnecting": false,
+  "messages": [
+    {
+      "data": {
+        "username": "newuser",
+      },
+      "id": "mock-uuid-1234",
+      "kind": "outgoing",
+      "optimistic": true,
+      "timestamp": 1724772800000,
+      "type": "user.register",
+    },
+  ],
+  "pendingUsername": "newuser",
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {},
+}
+`;
+
+exports[`websocketSlice reducers > should handle connect 1`] = `
+{
+  "connectionStatus": "connecting",
+  "currentUser": null,
+  "error": null,
+  "isReconnecting": false,
+  "messages": [],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": "ws://test.com",
+  "userMap": {},
+}
+`;
+
+exports[`websocketSlice reducers > should handle connected 1`] = `
+{
+  "connectionStatus": "connected",
+  "currentUser": null,
+  "error": null,
+  "isReconnecting": false,
+  "messages": [],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {},
+}
+`;
+
+exports[`websocketSlice reducers > should handle connectionError 1`] = `
+{
+  "connectionStatus": "error",
+  "currentUser": null,
+  "error": "Test Error",
+  "isReconnecting": false,
+  "messages": [],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {},
+}
+`;
+
+exports[`websocketSlice reducers > should handle disconnected 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "currentUser": null,
+  "error": null,
+  "isReconnecting": false,
+  "messages": [],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {},
+}
+`;
+
+exports[`websocketSlice reducers > should handle setCurrentUser 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "currentUser": {
+    "id": 123,
+    "type": "user",
+    "username": "jules",
+  },
+  "error": null,
+  "isReconnecting": false,
+  "messages": [],
+  "pendingUsername": undefined,
+  "reconnectAttempts": 0,
+  "url": null,
+  "userMap": {
+    "123": {
+      "id": 123,
+      "type": "user",
+      "username": "jules",
+    },
+  },
+}
+`;

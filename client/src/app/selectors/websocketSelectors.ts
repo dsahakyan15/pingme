@@ -2,13 +2,17 @@ import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import type { WebSocketStoredMessage, IncomingEnvelope } from '../../types/WebSocketTypes';
 import type { Message } from '../../types/types';
-import type { WebSocketState } from '../../types/WebSocketTypes';
+import type { ConnectionState } from '../slices/connectionSlice';
+import type { ChatState } from '../slices/chatSlice';
 
-export const selectWebSocketState = (state: RootState) => state.websocket as WebSocketState;
+// Base selectors
+export const selectConnectionState = (state: RootState) => state.connection as ConnectionState;
+export const selectChatState = (state: RootState) => state.chat as ChatState;
 
+// Connection selectors
 export const selectConnectionStatus = createSelector(
-  [selectWebSocketState],
-  (websocket) => websocket.connectionStatus
+  [selectConnectionState],
+  (connection) => connection.connectionStatus
 );
 
 export const selectIsConnected = createSelector(
@@ -21,29 +25,43 @@ export const selectIsConnecting = createSelector(
   (status) => status === 'connecting'
 );
 
-export const selectWebSocketMessages = createSelector(
-  [selectWebSocketState],
-  (websocket) => websocket.messages
-);
-
 export const selectWebSocketError = createSelector(
-  [selectWebSocketState],
-  (websocket) => websocket.error
+  [selectConnectionState],
+  (connection) => connection.error
 );
 
 export const selectIsReconnecting = createSelector(
-  [selectWebSocketState],
-  (websocket) => websocket.isReconnecting
+  [selectConnectionState],
+  (connection) => connection.isReconnecting
 );
 
 export const selectReconnectAttempts = createSelector(
-  [selectWebSocketState],
-  (websocket) => websocket.reconnectAttempts
+  [selectConnectionState],
+  (connection) => connection.reconnectAttempts
+);
+
+// Chat selectors
+export const selectMessagesById = createSelector(
+    [selectChatState],
+    (chat) => chat.messages.byId
+);
+
+export const selectAllMessageIds = createSelector(
+    [selectChatState],
+    (chat) => chat.messages.allIds
+);
+
+export const selectWebSocketMessages = createSelector(
+  [selectAllMessageIds, selectMessagesById],
+  (allIds, byId) => allIds.map(id => byId[id])
 );
 
 export const selectLatestMessage = createSelector(
-  [selectWebSocketMessages],
-  (messages) => messages[messages.length - 1] || null
+  [selectAllMessageIds, selectMessagesById],
+  (allIds, byId) => {
+    const lastId = allIds[allIds.length - 1];
+    return lastId ? byId[lastId] : null;
+  }
 );
 
 export const selectMessagesByType = createSelector(
@@ -52,7 +70,6 @@ export const selectMessagesByType = createSelector(
     messages.filter((m: WebSocketStoredMessage) => m.kind === 'incoming' && (m as IncomingEnvelope).type === messageType)
 );
 
-// Domain chat messages (incoming only type==='message')
 export const selectChatMessages = createSelector(
   [selectWebSocketMessages],
   (messages) => messages
@@ -61,21 +78,22 @@ export const selectChatMessages = createSelector(
 );
 
 export const selectCurrentUser = createSelector(
-  [selectWebSocketState],
-  (ws) => ws.currentUser
+  [selectChatState],
+  (chat) => chat.currentUser
 );
 
-export const selectUsersMap = createSelector([
-  selectWebSocketState,
-], (ws: WebSocketState) => ws.userMap ?? {});
+export const selectUsersMap = createSelector(
+    [selectChatState],
+    (chat) => chat.userMap ?? {}
+);
 
-export const makeSelectUsernameById = () => createSelector([
-  selectUsersMap,
-  (_: RootState, userId: number | undefined) => userId,
-], (map, userId) => (userId != null ? map[userId]?.username : undefined));
+export const makeSelectUsernameById = () => createSelector(
+  [selectUsersMap, (_: RootState, userId: number | undefined) => userId],
+  (map, userId) => (userId != null ? map[userId]?.username : undefined)
+);
 
 export const selectUsernameById = (state: RootState, userId: number | undefined) => {
   if (userId == null) return undefined;
-  const ws: WebSocketState = selectWebSocketState(state);
-  return ws.userMap?.[userId]?.username;
+  const chatState: ChatState = selectChatState(state);
+  return chatState.userMap?.[userId]?.username;
 };

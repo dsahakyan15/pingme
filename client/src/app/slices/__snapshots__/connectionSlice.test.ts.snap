@@ -1,0 +1,71 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`connectionSlice reducers > should handle connect 1`] = `
+{
+  "connectionStatus": "connecting",
+  "error": null,
+  "isReconnecting": false,
+  "reconnectAttempts": 0,
+  "url": "ws://test.com",
+}
+`;
+
+exports[`connectionSlice reducers > should handle connected 1`] = `
+{
+  "connectionStatus": "connected",
+  "error": null,
+  "isReconnecting": false,
+  "reconnectAttempts": 0,
+  "url": null,
+}
+`;
+
+exports[`connectionSlice reducers > should handle connectionError 1`] = `
+{
+  "connectionStatus": "error",
+  "error": "Test Error",
+  "isReconnecting": false,
+  "reconnectAttempts": 0,
+  "url": null,
+}
+`;
+
+exports[`connectionSlice reducers > should handle disconnect (user initiated) 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "error": null,
+  "isReconnecting": false,
+  "reconnectAttempts": 0,
+  "url": null,
+}
+`;
+
+exports[`connectionSlice reducers > should handle disconnected 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "error": null,
+  "isReconnecting": false,
+  "reconnectAttempts": 0,
+  "url": null,
+}
+`;
+
+exports[`connectionSlice reducers > should handle startReconnecting 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "error": null,
+  "isReconnecting": true,
+  "reconnectAttempts": 2,
+  "url": null,
+}
+`;
+
+exports[`connectionSlice reducers > should handle stopReconnecting 1`] = `
+{
+  "connectionStatus": "disconnected",
+  "error": null,
+  "isReconnecting": false,
+  "reconnectAttempts": 0,
+  "url": null,
+}
+`;
