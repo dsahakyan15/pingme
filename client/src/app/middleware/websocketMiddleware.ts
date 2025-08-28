@@ -65,8 +65,21 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
 
       websocket.onopen = () => {
         store.dispatch(connected());
-        // Автоматически запрашиваем историю сообщений при подключении
-        store.dispatch(requestHistory());
+
+        // Если пользователь уже был зарегистрирован, переотправляем регистрацию
+        const currentState = store.getState().websocket;
+        if (currentState.currentUser && currentState.isRegistered && websocket) {
+          const reRegisterMessage = {
+            type: 'user.register',
+            data: {
+              username: currentState.currentUser.username,
+            },
+            timestamp: Date.now(),
+          };
+          websocket.send(JSON.stringify(reRegisterMessage));
+        }
+
+        // История будет запрашиваться только по явному запросу пользователя
       };
 
       websocket.onclose = (event) => {
@@ -119,7 +132,6 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
               username: user.username,
             }));
 
-          
             store.dispatch(
               historyReceived({
                 messages: formattedMessages,
@@ -175,6 +187,9 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
       console.error('Failed to request message history:', error);
       store.dispatch(connectionError('Failed to request message history'));
     }
+  } else if (requestHistory.match(action)) {
+    // Если WebSocket не подключен, сбрасываем состояние загрузки
+    store.dispatch(historyReceived({ messages: [], users: [] }));
   }
 
   if (requestPrivateConversation.match(action) && websocket?.readyState === WebSocket.OPEN) {

@@ -23,7 +23,7 @@ const initialState: WebSocketState = {
   isReconnecting: false,
   reconnectAttempts: 0,
   currentUser: null,
-  isRegistered:false,
+  isRegistered: false,
   pendingUsername: undefined,
   userMap: {},
   isLoadingHistory: false,
@@ -68,7 +68,7 @@ const websocketSlice = createSlice({
 
     requestHistory: (state) => {
       // Действие для запроса истории сообщений
-      
+
       state.isLoadingHistory = true;
     },
 
@@ -78,8 +78,23 @@ const websocketSlice = createSlice({
     ) => {
       const { messages, users } = action.payload;
 
-      // Очищаем старые сообщения и добавляем историю
-      state.messages = [...messages];
+      // Создаем Set существующих ID сообщений для быстрого поиска
+      const existingMessageIds = new Set(
+        state.messages.map((msg) => {
+          // Для исторических сообщений используем message_id из data
+          if (msg.kind === 'incoming' && msg.type === 'message') {
+            const messageData = (msg as IncomingEnvelope<Message>).data;
+            return `msg-${messageData.message_id}`;
+          }
+          return msg.id;
+        })
+      );
+
+      // Фильтруем новые сообщения, исключая дубликаты
+      const newMessages = messages.filter((msg) => !existingMessageIds.has(msg.id));
+
+      // Добавляем только новые сообщения в начало списка (так как это история)
+      state.messages = [...newMessages, ...state.messages];
 
       // Обновляем карту пользователей
       if (!state.userMap) state.userMap = {};
@@ -93,12 +108,14 @@ const websocketSlice = createSlice({
 
     disconnected: (state) => {
       state.connectionStatus = 'disconnected';
+      state.isLoadingHistory = false; // Сбрасываем состояние загрузки при отключении
     },
 
     connectionError: (state, action: PayloadAction<string>) => {
       state.connectionStatus = 'error';
       state.error = action.payload;
       state.isReconnecting = false;
+      state.isLoadingHistory = false; // Сбрасываем состояние загрузки при ошибке
     },
 
     incomingMessageReceived: (state, action: PayloadAction<IncomingEnvelope>) => {
@@ -165,9 +182,23 @@ const websocketSlice = createSlice({
             senderId: messageData.sender_id,
           };
         }
-      }
 
-      state.messages.push(stored);
+        // Проверяем на дублирование перед добавлением сообщения
+        const messageId = `msg-${messageData.message_id}`;
+        const exists = state.messages.some((msg) => {
+          if (msg.kind === 'incoming' && msg.type === 'message') {
+            const existingMessageData = (msg as IncomingEnvelope<Message>).data;
+            return existingMessageData.message_id === messageData.message_id;
+          }
+          return msg.id === messageId;
+        });
+
+        if (!exists) {
+          state.messages.push(stored);
+        }
+      } else {
+        state.messages.push(stored);
+      }
     },
 
     sendMessage: (state, action: PayloadAction<SendMessagePayload>) => {
@@ -179,11 +210,17 @@ const websocketSlice = createSlice({
         timestamp: Date.now(),
         optimistic: true,
       } as WebSocketStoredMessage;
+
       if (action.payload.type === 'user.register') {
         const payloadData = action.payload.data as { username: string };
         state.pendingUsername = payloadData.username;
       }
-      state.messages.push(stored);
+
+      // Проверяем на дублирование перед добавлением оптимистичного сообщения
+      const exists = state.messages.some((msg) => msg.id === optimisticId);
+      if (!exists) {
+        state.messages.push(stored);
+      }
     },
 
     clearMessages: (state) => {
@@ -196,6 +233,7 @@ const websocketSlice = createSlice({
       state.error = null;
       state.isReconnecting = false;
       state.reconnectAttempts = 0;
+      state.isLoadingHistory = false; // Сбрасываем состояние загрузки при разъединении
       state.pendingUsername = undefined; // keep user & userMap for persistence
     },
 

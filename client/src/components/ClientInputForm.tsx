@@ -23,7 +23,7 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
   conversationId = 1,
 }) => {
   const [message, setMessage] = useState('');
-  const {sendMessage} = useWebSocketRTK();
+  const { sendMessage } = useWebSocketRTK();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const apiKey = import.meta.env.VITE_API_KEY as string | undefined;
   const {
@@ -195,7 +195,12 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
             {fixError}
           </p>
         )}
-        {!isConnected && <p className="text-sm text-red-500 mt-2">WebSocket is not connected</p>}
+        {!isConnected && (
+          <p className="text-sm text-red-500 mt-2">WebSocket не подключен. Переподключение...</p>
+        )}
+        {isConnected && !user_id && (
+          <p className="text-sm text-orange-500 mt-2">Ожидается вход в систему...</p>
+        )}
       </div>
     </div>
   );

@@ -28,13 +28,17 @@ const ChatPage: React.FC = () => {
     requestHistory,
     setActiveConversation,
     createPrivateConversation,
+    connectionStatus,
   } = useWebSocketRTK();
 
   useEffect(() => {
-    connect('ws://localhost:3000');
-  }, [connect]);
+    if (connectionStatus === 'disconnected') {
+      connect('ws://localhost:3000');
+    }
+  }, [connectionStatus, connect]);
 
   const isAuthenticated = useAppSelector((state) => state.websocket.isRegistered);
+
   const handleConversationSelect = (conversationId: number) => {
     setActiveConversation(conversationId);
   };
@@ -49,8 +53,6 @@ const ChatPage: React.FC = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
-  console.log(isLoadingHistory);
 
   useEffect(() => {
     scrollToBottom();
@@ -106,8 +108,9 @@ const ChatPage: React.FC = () => {
                     return (
                       <div
                         key={msg.message_id}
-                        className={`flex message-enter ${isCurrentUser ? 'justify-end' : 'justify-start'
-                          }`}
+                        className={`flex message-enter ${
+                          isCurrentUser ? 'justify-end' : 'justify-start'
+                        }`}
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
                         <ChatMessage
