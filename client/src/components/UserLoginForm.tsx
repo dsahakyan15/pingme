@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import type { EventPayloadMap, OutgoingEventType } from '../types/types';
+import { useWebSocketRTK } from '@/hooks';
 
-interface UserLoginFormProps {
-  setSender: React.Dispatch<React.SetStateAction<string>>;
-  onSendMessage: <T extends OutgoingEventType>(type: T, data: EventPayloadMap[T]) => void;
-}
-
-const UserLoginForm: React.FC<UserLoginFormProps> = ({ setSender, onSendMessage }) => {
+const UserLoginForm: React.FC= () => {
   const [username, setUsername] = useState('');
+
+const {sendMessage} = useWebSocketRTK()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (username.trim()) {
-      setSender(username.trim());
-      onSendMessage('user.register', { username: username.trim() });
+      sendMessage('user.register', { username: username.trim() });
+
+
+      //TODO
     }
   };
 

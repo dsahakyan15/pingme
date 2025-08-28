@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch , useAppSelector } from '@/app/hooks';
 import {
   connect,
   disconnect,
@@ -34,25 +34,25 @@ import type { OutgoingEventType, EventPayloadMap } from '../types/types';
 import type { RootState } from '../app/store';
 
 export const useWebSocketRTK = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
-  const connectionStatus = useSelector(selectConnectionStatus);
-  const isConnected = useSelector(selectIsConnected);
-  const isConnecting = useSelector(selectIsConnecting);
-  const rawMessages = useSelector(selectWebSocketMessages);
-  const chatMessages = useSelector(selectChatMessages);
-  const usersMap = useSelector(selectUsersMap);
-  const error = useSelector(selectWebSocketError);
-  const isReconnecting = useSelector(selectIsReconnecting);
-  const reconnectAttempts = useSelector(selectReconnectAttempts);
-  const latestMessage = useSelector(selectLatestMessage);
-  const currentUser = useSelector(selectCurrentUser);
-  const currentUrl = useSelector((s: RootState) => s.websocket.url);
-  const isLoadingHistory = useSelector(selectIsLoadingHistory);
-  const conversations = useSelector(selectConversations);
-  const activeConversationId = useSelector(selectActiveConversationId);
-  const activeConversation = useSelector(selectActiveConversation);
-  const conversationMessages = useSelector(selectConversationMessages);
+  const connectionStatus = useAppSelector(selectConnectionStatus);
+  const isConnected = useAppSelector(selectIsConnected);
+  const isConnecting = useAppSelector(selectIsConnecting);
+  const rawMessages = useAppSelector(selectWebSocketMessages);
+  const chatMessages = useAppSelector(selectChatMessages);
+  const usersMap = useAppSelector(selectUsersMap);
+  const error = useAppSelector(selectWebSocketError);
+  const isReconnecting = useAppSelector(selectIsReconnecting);
+  const reconnectAttempts = useAppSelector(selectReconnectAttempts);
+  const latestMessage = useAppSelector(selectLatestMessage);
+  const currentUser = useAppSelector(selectCurrentUser);
+  const currentUrl = useAppSelector((s: RootState) => s.websocket.url);
+  const isLoadingHistory = useAppSelector(selectIsLoadingHistory);
+  const conversations = useAppSelector(selectConversations);
+  const activeConversationId = useAppSelector(selectActiveConversationId);
+  const activeConversation = useAppSelector(selectActiveConversation);
+  const conversationMessages = useAppSelector(selectConversationMessages);
 
   const handleConnect = useCallback(
     (url: string, protocols?: string | string[]) => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import ClientInputForm from '../../../components/ClientInputForm';
 import { useWebSocketRTK } from '../../../hooks/useWebSocketRTK';
@@ -9,7 +9,7 @@ import ChatMessage from '../../../components/chat/ChatMessage';
 import { ChatHeader } from '../../../components/ChatHeader';
 import { EmptyChatState } from '../../../components/EmptyChatState';
 import type { Message, User } from '../../../types/types';
-// import { useAppSelector } from '../../../app/hooks';
+import { useAppSelector } from '../../../app/hooks';
 
 const ChatPage: React.FC = () => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
@@ -20,7 +20,6 @@ const ChatPage: React.FC = () => {
     conversations,
     activeConversationId,
     activeConversation,
-    sendMessage,
     error,
     usersMap,
     connect,
@@ -35,10 +34,7 @@ const ChatPage: React.FC = () => {
     connect('ws://localhost:3000');
   }, [connect]);
 
-  console.log(usersMap);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [sender, setSender] = useState<string>('');
-
+  const isAuthenticated = useAppSelector((state) => state.websocket.isRegistered);
   const handleConversationSelect = (conversationId: number) => {
     setActiveConversation(conversationId);
   };
@@ -50,15 +46,11 @@ const ChatPage: React.FC = () => {
   // Get messages for the active conversation
   const displayMessages = activeConversationId ? conversationMessages : chatMessages; // Fallback to all messages if no active conversation
 
-  useEffect(() => {
-    if (sender) {
-      setIsAuthenticated(true);
-    }
-  }, [sender]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+  
+  console.log(isLoadingHistory);
 
   useEffect(() => {
     scrollToBottom();
@@ -67,7 +59,8 @@ const ChatPage: React.FC = () => {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
       {!isAuthenticated ? (
-        <UserLoginForm setSender={setSender} onSendMessage={sendMessage} />
+        // TODO
+        <UserLoginForm />
       ) : (
         <>
           <Header isConnected={isConnected} connectionError={error || undefined} />
@@ -113,9 +106,8 @@ const ChatPage: React.FC = () => {
                     return (
                       <div
                         key={msg.message_id}
-                        className={`flex message-enter ${
-                          isCurrentUser ? 'justify-end' : 'justify-start'
-                        }`}
+                        className={`flex message-enter ${isCurrentUser ? 'justify-end' : 'justify-start'
+                          }`}
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
                         <ChatMessage
@@ -132,7 +124,6 @@ const ChatPage: React.FC = () => {
               </div>
 
               <ClientInputForm
-                onSendMessage={sendMessage}
                 user_id={currentUser?.id}
                 isConnected={isConnected}
                 conversationId={activeConversationId || 1}

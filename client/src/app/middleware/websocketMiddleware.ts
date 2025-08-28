@@ -119,6 +119,7 @@ export const websocketMiddleware: Middleware<object, RootState> = (store) => (ne
               username: user.username,
             }));
 
+          
             store.dispatch(
               historyReceived({
                 messages: formattedMessages,

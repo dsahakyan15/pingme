@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { PaperAirplaneIcon } from '../widgets/simpleIcons';
-import type { EventPayloadMap, OutgoingEventType } from '../types/types';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,21 +10,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useAiFix from '@/hooks/ai/useAiFix';
-
+import { useWebSocketRTK } from '@/hooks/useWebSocketRTK';
 interface ClientInputFormProps {
-  onSendMessage: <T extends OutgoingEventType>(type: T, data: EventPayloadMap[T]) => void;
   isConnected?: boolean;
   user_id?: number;
   conversationId?: number;
 }
 
 const ClientInputForm: React.FC<ClientInputFormProps> = ({
-  onSendMessage,
   isConnected = false,
   user_id = 0,
   conversationId = 1,
 }) => {
   const [message, setMessage] = useState('');
+  const {sendMessage} = useWebSocketRTK();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const apiKey = import.meta.env.VITE_API_KEY as string | undefined;
   const {
@@ -39,7 +37,7 @@ const ClientInputForm: React.FC<ClientInputFormProps> = ({
     e.preventDefault();
     if (!message.trim() || !user_id) return;
 
-    onSendMessage('message.send', {
+    sendMessage('message.send', {
       conversation_id: conversationId,
       sender_id: user_id,
       text: message.trim(),

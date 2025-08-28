@@ -15,23 +15,6 @@ import type {
 } from '../../types/ConversationTypes';
 import type { Message } from '../../types/types';
 
-// const STORAGE_KEY = 'chat.currentUser';
-// const loadPersistedUser = (): User | null => {
-//   try {
-//     if (typeof window === 'undefined') return null;
-//     const raw = localStorage.getItem(STORAGE_KEY);
-//     if (!raw) return null;
-//     const parsed = JSON.parse(raw);
-//     if (parsed && typeof parsed.id === 'number' && typeof parsed.username === 'string') {
-//       return { type: 'user', id: parsed.id, username: parsed.username } as User;
-//     }
-//     return null;
-//   } catch {
-//     return null;
-//   }
-// };
-
-// const persistedUser = loadPersistedUser();
 const initialState: WebSocketState = {
   connectionStatus: 'disconnected',
   messages: [],
@@ -40,6 +23,7 @@ const initialState: WebSocketState = {
   isReconnecting: false,
   reconnectAttempts: 0,
   currentUser: null,
+  isRegistered:false,
   pendingUsername: undefined,
   userMap: {},
   isLoadingHistory: false,
@@ -84,6 +68,7 @@ const websocketSlice = createSlice({
 
     requestHistory: (state) => {
       // Действие для запроса истории сообщений
+      
       state.isLoadingHistory = true;
     },
 
@@ -140,6 +125,7 @@ const websocketSlice = createSlice({
         }
         if (state.pendingUsername && userData.username === state.pendingUsername) {
           state.currentUser = userData;
+          state.isRegistered = true;
           state.pendingUsername = undefined;
         }
       }
@@ -222,12 +208,13 @@ const websocketSlice = createSlice({
       state.isReconnecting = false;
     },
 
-    setCurrentUser: (state, action: PayloadAction<{ user: { id: number; username: string } }>) => {
-      const u = { type: 'user', ...action.payload.user } as User;
-      state.currentUser = u;
-      if (!state.userMap) state.userMap = {};
-      state.userMap[u.id] = u;
-    },
+    // setCurrentUser: (state, action: PayloadAction<{ user: { id: number; username: string } }>) => {
+    //   const u = { type: 'user', ...action.payload.user } as User;
+    //   state.currentUser = u;
+    //   state.isRegistered = true;
+    //   if (!state.userMap) state.userMap = {};
+    //   state.userMap[u.id] = u;
+    // },
 
     // Conversation actions
     setActiveConversation: (state, action: PayloadAction<number>) => {
@@ -307,7 +294,6 @@ export const {
   disconnect,
   startReconnecting,
   stopReconnecting,
-  setCurrentUser,
   setActiveConversation,
   addConversation,
   createPrivateConversation,

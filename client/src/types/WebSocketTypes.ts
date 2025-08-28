@@ -34,6 +34,7 @@ export interface WebSocketState {
   isReconnecting: boolean;
   reconnectAttempts: number;
   currentUser: User | null;
+  isRegistered: boolean;
   pendingUsername?: string; // username awaiting server ack
   userMap?: Record<number, User>; // map of known users
   isLoadingHistory?: boolean; // indicator for loading history
